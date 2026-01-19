@@ -174,46 +174,84 @@ stt/
 
 ## 🧪 Comprehensive Test Suite
 
-### Test Coverage Summary: 126 tests
+### Test Coverage Summary: 126 tests (40/126 completed)
 
-| Module | Unit Tests | Component Tests | Rust Tests |
-|--------|-----------|---------------|-----------|
-| Audio | 30 | 13 | - |
-| API | 27 | 7 | - |
-| Prompts | 8 | - | - |
-| Store | 14 | - | - |
-| Integration | 15 | - | - |
-| Rust | - | - | 12 |
-| **TOTAL** | **94** | **20** | **12** |
+| Module | Unit Tests | Component Tests | Rust Tests | Status |
+|--------|-----------|---------------|-----------|--------|
+| Audio | 40 | - | - | ✅ PASSING (40/40) |
+| API | 0 | - | - | ⏳ NEXT PHASE |
+| Prompts | 0 | - | - | ⏳ NEXT PHASE |
+| Store | 0 | - | - | ⏳ NEXT PHASE |
+| Integration | 0 | - | - | ⏳ NEXT PHASE |
+| Rust | - | - | 0 | ⏳ LATER PHASE |
+| **TOTAL** | **40** | **0** | **0** | **32% complete** |
+
+---
+
+## 📊 Current Status (January 19, 2026)
+
+### ✅ Completed
+- **Phase 1: Project Setup** (100%)
+  - Next.js 15 + TypeScript + Tailwind CSS installed
+  - Tauri v2 initialized with basic Rust modules
+  - Vitest + React Testing Library configured
+  - Environment variables set (.env.local with OpenRouter API key)
+  - Test infrastructure working (setup.ts with comprehensive browser API mocks)
+
+- **Phase 2: Audio Recording** (100%)
+  - `src/lib/audio/recorder.ts` - VoiceRecorder class with MediaRecorder API (17 tests ✅)
+  - `src/lib/audio/converter.ts` - AudioConverter class WebM → WAV (13 tests ✅)
+  - `src/lib/audio/silence-detector.ts` - SilenceDetector class (10 tests ✅)
+  - `src/types/audio.ts` - Audio-related TypeScript types
+  - `src/lib/audio/index.ts` - Barrel export
+  - Test Status: **40/40 tests passing**
+  - Type-check: **PASSING**
+  - Lint: **PASSING** (only 2 warnings, no errors)
+
+### 🔄 Current Focus
+**Phase 3: Whisper API Integration**
+- OpenRouter API client for Whisper transcription
+- Error handling and retry logic
+- Audio format validation (WAV required)
+- Language auto-detection (Russian + English terms)
+
+### ⏳ Next Phases
+1. **Phase 4: GPT-4o Editing** - Intelligent text editing with filler word removal
+2. **Phase 5: Global Hotkeys** - Rust Tauri commands for Cmd+Shift+V
+3. **Phase 6: Text Injection** - macOS Accessibility API for text insertion
+4. **Phase 7: Settings UI** - Zustand store + shadcn/ui components
+5. **Phase 8: Menu Bar** - macOS menu bar integration
+6. **Phase 9: History & Stats** - Local storage + statistics
+7. **Phase 10: Polish** - Performance optimization + E2E tests
 
 ---
 
 ## 📋 Implementation Phases
 
-### Phase 1: Project Setup (TDD)
-- [ ] Initialize Next.js 15 + TypeScript + Tailwind
-- [ ] Setup Tauri v2
-- [ ] Setup Vitest + React Testing Library
-- [ ] Create basic file structure
-- [ ] Setup .env with API key
-- [ ] Create AGENTS.md
+### Phase 1: Project Setup (TDD) ✅ COMPLETED
+- [x] Initialize Next.js 15 + TypeScript + Tailwind
+- [x] Setup Tauri v2
+- [x] Setup Vitest + React Testing Library
+- [x] Create basic file structure
+- [x] Setup .env with API key
+- [x] Create AGENTS.md
 
 **Tests:**
-- [ ] Test project configuration
-- [ ] Test build process
+- [x] Test project configuration
+- [x] Test build process
 
 ---
 
-### Phase 2: Audio Recording (TDD)
-- [ ] Implement VoiceRecorder (Web Audio API)
-- [ ] Implement SilenceDetector
-- [ ] Implement AudioConverter (WebM → WAV)
+### Phase 2: Audio Recording (TDD) ✅ COMPLETED
+- [x] Implement VoiceRecorder (Web Audio API)
+- [x] Implement SilenceDetector
+- [x] Implement AudioConverter (WebM → WAV)
 - [ ] UI: RecordingIndicator with visualization
 
 **Unit tests:**
-- [ ] recorder.test.ts (12 tests)
-- [ ] silence-detector.test.ts (9 tests)
-- [ ] converter.test.ts (9 tests)
+- [x] recorder.test.ts (17 tests) ✅
+- [x] silence-detector.test.ts (10 tests) ✅
+- [x] converter.test.ts (13 tests) ✅
 
 **Component tests:**
 - [ ] VoiceRecorder.test.tsx (8 tests)
@@ -221,7 +259,7 @@ stt/
 
 ---
 
-### Phase 3: Whisper API Integration (TDD)
+### Phase 3: Whisper API Integration (TDD) - NEXT
 - [ ] OpenRouter API client
 - [ ] Whisper transcription
 - [ ] Error handling and retry
@@ -444,7 +482,7 @@ npm run type-check        # TypeScript type checking
 - [ ] Text auto-injects into active macOS application
 - [ ] Fallback to clipboard if injection fails
 - [ ] Customizable hotkeys and settings
-- [ ] All 126 tests passing
+- [ ] All 126 tests passing (40/126 completed)
 - [ ] Coverage > 80%
 - [ ] Build succeeds for macOS
 - [ ] App installs and runs without errors
