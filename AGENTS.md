@@ -1,14 +1,18 @@
 # AGENTS.md - Voice Dictation App (Wispr Flow Clone)
 
+*Last updated: January 19, 2026*
+*Version: 0.4.0 - Phase 3 Complete, Phase 4 Next*
+
 ## Project Overview
 Voice dictation AI application using Next.js, Tauri, and OpenRouter with Whisper. Speech-to-text with AI auto-editing for macOS desktop.
 
 ## Tech Stack
 - Frontend: Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui
 - Desktop: Tauri v2 (Rust backend)
-- AI: OpenAI Whisper via OpenRouter API
+- AI: OpenRouter API (Whisper for transcription, GPT-4o mini for editing)
 - State: Zustand
 - Testing: Vitest + React Testing Library + TDD
+- Audio: Web Audio API
 
 ## Build & Development Commands
 
@@ -162,11 +166,13 @@ describe('ComponentName', () => {
 src/
 ├── app/                    # Next.js app directory
 ├── components/             # React components
-│   ├── ui/                # Reusable UI components
+│   ├── ui/                # Reusable UI components (shadcn/ui)
 │   └── features/          # Feature-specific components
 ├── lib/                   # Utilities & helpers
 │   ├── api/              # API clients (OpenRouter)
-│   └── audio/            # Audio processing
+│   │   └── openrouter/  # OpenRouter API (Phase 3 complete)
+│   ├── audio/            # Audio processing (Phase 2 complete)
+│   └── text/            # Text editing utilities (Phase 4 next)
 ├── store/                 # Zustand stores
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript types
@@ -185,28 +191,31 @@ src-tauri/
 ### Environment Variables
 ```env
 OPENROUTER_API_KEY=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
-OPENROUTER_MODEL=whisper-1
+OPENROUTER_WHISPER_MODEL=whisper-1
+OPENROUTER_EDIT_MODEL=openai/gpt-4o-mini
 ```
 
-### API Client Pattern
+### Whisper API Pattern (✅ COMPLETE)
 ```typescript
-// src/lib/api/openrouter.ts
-export async function transcribeAudio(audioBlob: Blob) {
-  const formData = new FormData()
-  formData.append('file', audioBlob)
-  formData.append('model', 'whisper-1')
+// src/lib/api/openrouter/whisper.ts
+import { transcribeAudio } from '@/lib/api/openrouter'
 
-  const response = await fetch('https://openrouter.ai/api/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
-    },
-    body: formData
-  })
+const result = await transcribeAudio(wavBlob, { language: 'ru' })
 
-  if (!response.ok) throw new Error('Transcription failed')
-  return response.json()
+if (result.success) {
+  console.log(result.data.text) // Transcribed text
+  console.log(result.data.language) // Detected language (ru, en, etc.)
+  console.log(result.data.duration) // Audio duration in seconds
+} else {
+  console.error('Transcription failed:', result.error)
 }
+
+// Features:
+// - WAV format validation (required by Whisper API)
+// - File size validation (25MB max)
+// - Retry logic with exponential backoff
+// - Language auto-detection (if language not specified)
+// - Error handling for client (4xx) and server (5xx) errors
 ```
 
 ## Key Features to Implement
@@ -217,11 +226,12 @@ export async function transcribeAudio(audioBlob: Blob) {
 - Audio format conversion (WebM → WAV/MP3)
 - Recording controls (pause/resume/stop)
 
-### Transcription
-- Real-time streaming (if available)
-- Batch processing fallback
+### Transcription (✅ COMPLETE)
+- Batch processing via Whisper API
 - Language auto-detection
-- Error retry logic
+- Error retry logic with exponential backoff
+- WAV format validation (25MB max)
+- Error handling for client (4xx) and server (5xx) errors
 
 ### Text Editing
 - Remove filler words (um, uh, like)
@@ -257,7 +267,7 @@ export async function transcribeAudio(audioBlob: Blob) {
 3. [x] Create AGENTS.md
 4. [x] Create PRD.md
 5. [x] Implement basic voice recording (Phase 2 - Audio)
-6. [ ] Integrate Whisper API (Phase 3)
+6. [x] Integrate Whisper API (Phase 3)
 7. [ ] Add text editing features (Phase 4)
 8. [ ] Implement macOS hotkeys (Phase 5)
 9. [ ] Add personal dictionary (Phase 9)
@@ -300,8 +310,36 @@ Type-check: PASSING
 Lint: PASSING (2 warnings only, no errors)
 ```
 
+### Phase 3: Whisper API Integration ✅ COMPLETED (23/23 tests passing)
+**Implemented:**
+- `src/lib/api/openrouter/types.ts` - API types (WhisperRequest, WhisperResponse, TranscriptionResult)
+- `src/lib/api/openrouter/client.ts` - OpenRouter client class with error handling
+- `src/lib/api/openrouter/whisper.ts` - Whisper transcription with retry logic
+- `src/lib/api/openrouter/index.ts` - Barrel export
+
+**Features:**
+- WAV format validation (required by Whisper API)
+- File size limit validation (25MB max)
+- Retry logic with exponential backoff
+- Language auto-detection support
+- Error handling for client (4xx) and server (5xx) errors
+
+**Tests (all passing):**
+- `src/__tests__/unit/api/client.test.ts` - 10 tests
+- `src/__tests__/unit/api/whisper.test.ts` - 13 tests
+
+**Test Status:**
+```
+✓ src/__tests__/unit/api/client.test.ts (10 tests)
+✓ src/__tests__/unit/api/whisper.test.ts (13 tests)
+
+Test Files: 2 passed
+Tests: 23 passed
+Type-check: PASSING
+Lint: PASSING
+```
+
 **Next Steps:**
-- Phase 3: Whisper API Integration
 - Phase 4: GPT-4o Text Editing
 - Phase 5: Global Hotkeys (Rust)
 - Phase 6: Text Injection (Rust)
@@ -328,6 +366,15 @@ Lint: PASSING (2 warnings only, no errors)
 - Solution: Verify API key in .env file
 - Check audio format (WAV required)
 - Verify OpenRouter API status
+
+### Issue: FormData mock issues in tests
+- Solution: Ensure MockFormData in setup.ts handles both string and Blob values correctly
+- Use `global.fetch = vi.fn()` for fetch mocking
+- Check that FormData methods (append, get, getAll) work as expected
+
+### Issue: Retry loop not stopping
+- Solution: Check for client errors (4xx) which should not retry
+- Only retry server errors (5xx) and network errors
 
 ## Development Workflow
 

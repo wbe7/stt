@@ -178,11 +178,49 @@ const global = globalThis as typeof globalThis & {
   navigator: Navigator & { mediaDevices: { getUserMedia: () => Promise<MediaStream> } }
   Blob: typeof Blob
   BlobEvent: typeof BlobEvent
+  FormData: typeof FormData
 }
 
 global.AudioContext = MockAudioContext as unknown as typeof AudioContext
 global.webkitAudioContext = MockAudioContext as unknown as typeof AudioContext
 global.MediaRecorder = MockMediaRecorder as unknown as typeof MediaRecorder
+
+global.FormData = class MockFormData {
+  private _data: Map<string, string | Blob> = new Map()
+
+  append(name: string, value: string | Blob): void {
+    if (typeof value === 'string') {
+      this._data.set(name, value)
+    } else if (value instanceof Blob) {
+      this._data.set(name, value)
+    }
+  }
+
+  delete(name: string): void {
+    this._data.delete(name)
+  }
+
+  get(name: string): FormDataEntryValue | null {
+    return this._data.get(name) || null
+  }
+
+  getAll(name: string): FormDataEntryValue[] {
+    const value = this._data.get(name)
+    return value ? [value] : []
+  }
+
+  has(name: string): boolean {
+    return this._data.has(name)
+  }
+
+  set(name: string, value: string | Blob): void {
+    this._data.set(name, value)
+  }
+
+  [Symbol.for('nodejs.util.inspect.custom')](): unknown {
+    return `MockFormData {${Array.from(this._data.entries()).map(([k, v]) => `${k}: ${typeof v}`).join(', ')}}`
+  }
+} as unknown as typeof FormData
 
 global.navigator = {
   mediaDevices: {
@@ -201,9 +239,9 @@ global.Blob = class MockBlob {
   bytes: () => Promise<Uint8Array<ArrayBuffer>>
 
   constructor(parts: unknown[], options: BlobPropertyBag = {}) {
-    this.parts = parts
+    this.parts = Array.isArray(parts) ? parts : []
     this.options = options
-    this.size = parts.reduce((acc: number, part) => {
+    this.size = this.parts.reduce((acc: number, part) => {
       if (part instanceof ArrayBuffer) {
         return acc + part.byteLength
       }

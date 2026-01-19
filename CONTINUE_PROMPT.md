@@ -23,22 +23,36 @@ Building a voice dictation AI application that turns speech into polished text w
 - Type-check: **PASSING**
 - Lint: **PASSING**
 
+**Phase 3: Whisper API Integration** (100% complete)
+- `src/lib/api/openrouter/client.ts` - OpenRouter API client (10 tests ✅)
+- `src/lib/api/openrouter/whisper.ts` - Whisper transcription with retry (13 tests ✅)
+- `src/lib/api/openrouter/types.ts` - API types
+- `src/lib/api/openrouter/index.ts` - Barrel export
+- WAV format validation (25MB max)
+- Retry logic with exponential backoff
+- Language auto-detection support
+- Test Status: **63/63 tests passing**
+- Type-check: **PASSING**
+- Lint: **PASSING**
+
 ### 🔄 NEXT PHASE TO IMPLEMENT
 
-**Phase 3: Whisper API Integration**
-- OpenRouter API client for Whisper transcription
-- Error handling and retry logic
-- Audio format validation (WAV required by Whisper)
-- Language auto-detection support (Russian + English terms)
+**Phase 4: GPT-4o Editing**
+- OpenRouter API client for GPT-4o mini
+- Intelligent text editing functions
+- Filler word removal (um, uh, like)
+- Stuttering and repetition fix
+- Punctuation insertion
+- Capitalization correction
+- Tone adjustment (casual/formal)
 
 ### ⏳ REMAINING PHASES (Not Started)
-1. **Phase 4: GPT-4o Editing** - Intelligent text editing (filler word removal, stuttering fix)
-2. **Phase 5: Global Hotkeys** - Tauri commands for Cmd+Shift+V (Rust)
-3. **Phase 6: Text Injection** - macOS Accessibility API for text insertion (Rust)
-4. **Phase 7: Settings & Customization** - Zustand store + UI components
-5. **Phase 8: Menu Bar** - macOS menu bar integration
-6. **Phase 9: History & Stats** - Local storage + statistics
-7. **Phase 10: Polish & Optimization** - Performance + E2E tests
+1. **Phase 5: Global Hotkeys** - Tauri commands for Cmd+Shift+V (Rust)
+2. **Phase 6: Text Injection** - macOS Accessibility API for text insertion (Rust)
+3. **Phase 7: Settings & Customization** - Zustand store + UI components
+4. **Phase 8: Menu Bar** - macOS menu bar integration
+5. **Phase 9: History & Stats** - Local storage + statistics
+6. **Phase 10: Polish & Optimization** - Performance + E2E tests
 
 ---
 
@@ -66,18 +80,20 @@ DEFAULT_EDIT_MODEL=openai/gpt-4o-mini
 
 ## Key Requirements
 
-### Phase 3: Whisper API Integration (NEXT)
-1. Create `src/lib/api/openrouter/client.ts` - OpenRouter API client
-2. Create `src/lib/api/openrouter/whisper.ts` - Whisper transcription function
-3. Create `src/lib/api/openrouter/types.ts` - API types
-4. Create `src/lib/api/openrouter/index.ts` - Barrel export
-5. Write unit tests for Whisper API
-6. Test with actual audio files (converted from Phase 2)
+### Phase 4: GPT-4o Editing (NEXT)
+1. Create `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing function
+2. Create `src/lib/api/openrouter/edit-types.ts` - Editing types
+3. Create text editing utility functions:
+   - `removeFillerWords()` - Remove um, uh, like
+   - `fixStuttering()` - Fix repetitions
+   - `insertPunctuation()` - Add proper punctuation
+   - `correctCapitalization()` - Fix capital letters
+4. Write unit tests for text editing (15 tests)
+5. Test with actual transcription output from Phase 3
 
 ### Future Phases Overview
-- **Phase 4**: GPT-4o mini for intelligent text editing (remove filler words, fix stuttering)
-- **Phase 5-6**: Rust Tauri commands for macOS integration
-- **Phase 7-9**: UI components with shadcn/ui
+- **Phase 5-6**: Rust Tauri commands for macOS integration (hotkeys, text injection)
+- **Phase 7-9**: UI components with shadcn/ui (settings, menu bar, history)
 
 ---
 
@@ -181,7 +197,7 @@ try {
 
 ## API Integration Notes
 
-### OpenRouter Whisper API
+### OpenRouter Whisper API (✅ COMPLETE)
 ```typescript
 // Endpoint: https://openrouter.ai/api/v1/audio/transcriptions
 // Method: POST
@@ -192,6 +208,27 @@ try {
 //   file: <WAV audio blob>
 //   model: whisper-1
 //   language: <optional, auto-detect if omitted>
+
+// Usage:
+import { transcribeAudio } from '@/lib/api/openrouter'
+
+const result = await transcribeAudio(wavBlob, { language: 'ru' })
+if (result.success) {
+  console.log(result.data.text) // Transcribed text
+  console.log(result.data.language) // Detected language
+}
+```
+
+### OpenRouter GPT-4o Mini (NEXT - Phase 4)
+```typescript
+// Endpoint: https://openrouter.ai/api/v1/chat/completions
+// Method: POST
+// Content-Type: application/json
+// Headers:
+//   Authorization: Bearer ${OPENROUTER_API_KEY}
+// Body:
+//   model: openai/gpt-4o-mini
+//   messages: [{ role: "user", content: "Edit this text..." }]
 ```
 
 ### Audio Format Requirements
@@ -220,7 +257,9 @@ src/
 │   └── features/          # Feature-specific components
 ├── lib/                   # Utilities & helpers
 │   ├── api/              # API clients (OpenRouter)
-│   └── audio/            # Audio processing (Phase 2 complete)
+│   │   └── openrouter/  # OpenRouter API (Phase 3 complete)
+│   ├── audio/            # Audio processing (Phase 2 complete)
+│   └── text/            # Text editing utilities (Phase 4 next)
 ├── store/                 # Zustand stores
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript types
@@ -256,23 +295,39 @@ describe('ModuleName', () => {
 ## Current File Status
 
 ### ✅ Completed Files
+**Phase 1:**
+- `package.json` - Dependencies configured
+- `tsconfig.json` - TypeScript strict mode
+- `vitest.config.ts` - Test configuration
+- `.env.local` - OpenRouter API key
+
+**Phase 2: Audio Recording**
 - `src/lib/audio/recorder.ts` - VoiceRecorder class
 - `src/lib/audio/converter.ts` - AudioConverter class
 - `src/lib/audio/silence-detector.ts` - SilenceDetector class
 - `src/types/audio.ts` - Audio types
 - `src/lib/audio/index.ts` - Barrel export
-- `src/__tests__/setup.ts` - Test setup with mocks
+- `src/__tests__/setup.ts` - Test setup with mocks (Blob, FormData, MediaRecorder)
 - `src/__tests__/unit/audio/recorder.test.ts` - 17 tests
 - `src/__tests__/unit/audio/converter.test.ts` - 13 tests
 - `src/__tests__/unit/audio/silence-detector.test.ts` - 10 tests
 
-### ⏳ Next Files to Create
+**Phase 3: Whisper API Integration**
 - `src/lib/api/openrouter/client.ts` - OpenRouter API client
-- `src/lib/api/openrouter/whisper.ts` - Whisper transcription
-- `src/lib/api/openrouter/types.ts` - API types
+- `src/lib/api/openrouter/whisper.ts` - Whisper transcription with retry logic
+- `src/lib/api/openrouter/types.ts` - API types (WhisperRequest, WhisperResponse, TranscriptionResult)
 - `src/lib/api/openrouter/index.ts` - Barrel export
-- `src/__tests__/unit/api/whisper.test.ts` - Whisper tests
-- `src/__tests__/unit/api/client.test.ts` - Client tests
+- `src/__tests__/unit/api/client.test.ts` - 10 tests
+- `src/__tests__/unit/api/whisper.test.ts` - 13 tests
+
+### ⏳ Next Files to Create
+**Phase 4: GPT-4o Editing**
+- `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing function
+- `src/lib/api/openrouter/edit-types.ts` - Editing types
+- `src/lib/text/editing.ts` - Text editing utilities (removeFillerWords, fixStuttering, etc.)
+- `src/lib/text/index.ts` - Barrel export
+- `src/__tests__/unit/api/edit.test.ts` - GPT-4o editing tests (8 tests)
+- `src/__tests__/unit/text/editing.test.ts` - Text utility tests (7 tests)
 
 ---
 
@@ -290,44 +345,61 @@ describe('ModuleName', () => {
 
 ## Progress Tracking
 
-- **Total Tests**: 40/126 passing (32% complete)
-- **Phases Completed**: 2/10 (20%)
-- **Estimated Time Remaining**: ~23 hours
+- **Total Tests**: 63/126 passing (50% complete)
+- **Phases Completed**: 3/10 (30%)
+- **Estimated Time Remaining**: ~16 hours
 
 ---
 
-## Next Immediate Tasks (Phase 3)
+## Next Immediate Tasks (Phase 4)
 
-1. Create `src/lib/api/openrouter/types.ts` with:
-   - TranscriptionRequest interface
-   - TranscriptionResponse interface
-   - WhisperConfig interface
+1. Create `src/lib/api/openrouter/edit-types.ts` with:
+   - EditRequest interface
+   - EditResponse interface
+   - EditConfig interface (filler words, tone, etc.)
+   - TextEditOptions interface
 
-2. Create `src/lib/api/openrouter/client.ts` with:
-   - OpenRouter client class
-   - HTTP request helper
-   - Error handling
+2. Create `src/lib/api/openrouter/edit.ts` with:
+   - `editText()` function calling GPT-4o mini
+   - Prompt construction for different editing modes
+   - Error handling and retry logic
 
-3. Create `src/lib/api/openrouter/whisper.ts` with:
-   - `transcribeAudio()` function
-   - WAV format validation
-   - Retry logic
+3. Create `src/lib/text/editing.ts` with utility functions:
+   - `removeFillerWords(text: string, fillers: string[]): string`
+   - `fixStuttering(text: string): string`
+   - `insertPunctuation(text: string): string`
+   - `correctCapitalization(text: string): string`
+   - `adjustTone(text: string, tone: 'casual' | 'formal'): string`
 
-4. Create `src/lib/api/openrouter/index.ts` barrel export
+4. Create `src/lib/text/index.ts` barrel export
 
 5. Write tests:
-   - `src/__tests__/unit/api/whisper.test.ts` (10 tests)
-   - `src/__tests__/unit/api/client.test.ts` (7 tests)
+   - `src/__tests__/unit/api/edit.test.ts` (8 tests):
+     - GPT-4o client initialization
+     - Edit request with different modes
+     - Error handling and retries
+     - Response parsing
+   - `src/__tests__/unit/text/editing.test.ts` (7 tests):
+     - Remove filler words
+     - Fix stuttering patterns
+     - Insert punctuation
+     - Correct capitalization
 
 ---
 
 ## Common Issues & Solutions
 
-### Issue: API calls failing
-- Solution: Verify API key in .env.local, check OpenRouter status
+### Issue: Whisper API calls failing
+- Solution: Verify API key in .env.local, check OpenRouter status, ensure audio is WAV format
 
 ### Issue: Audio format rejected
 - Solution: Ensure AudioConverter outputs WAV, check file size (<25MB)
+
+### Issue: Retry loop not stopping
+- Solution: Check for client errors (4xx) which should not retry, only retry server errors (5xx)
+
+### Issue: FormData mock issues in tests
+- Solution: Ensure MockFormData in setup.ts handles both string and Blob values correctly
 
 ### Issue: TypeScript errors
 - Solution: Run `npm run type-check`, fix all errors before committing
@@ -338,4 +410,4 @@ describe('ModuleName', () => {
 ---
 
 *Last updated: January 19, 2026*
-*Version: 0.3.0 - Phase 2 Complete, Phase 3 Next*
+*Version: 0.4.0 - Phase 3 Complete, Phase 4 Next*
