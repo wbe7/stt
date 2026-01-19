@@ -275,6 +275,7 @@ if (result.success) {
 3. Run `npm run type-check` - no type errors
 4. Review changes for security issues
 5. Update documentation if needed
+6. **MUST commit changes after completing a phase** - Always create a commit after finishing implementation and ensuring all tests pass
 
 ---
 
