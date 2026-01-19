@@ -2,6 +2,7 @@ import type {
   TranscriptionResult,
   WhisperConfig,
 } from './types'
+import type { Message as EditMessage } from './edit-types'
 import { DEFAULT_WHISPER_CONFIG } from './types'
 
 const OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1'
@@ -53,5 +54,34 @@ export class OpenRouterClient {
       language: data.language,
       duration: data.duration,
     }
+  }
+
+  async chat(
+    model: string,
+    messages: EditMessage[]
+  ): Promise<string> {
+    const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const errorMessage = errorData.error?.message || `HTTP ${response.status}`
+      throw new Error(errorMessage)
+    }
+
+    const data = (await response.json()) as { choices?: Array<{ message: { content?: string } }> }
+
+    return data.choices?.[0]?.message?.content || ''
   }
 }

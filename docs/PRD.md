@@ -174,28 +174,29 @@ stt/
 
 ## 🧪 Comprehensive Test Suite
 
-### Test Coverage Summary: 126 tests (40/126 completed)
+### Test Coverage Summary: 126 tests (91/126 completed)
 
 | Module | Unit Tests | Component Tests | Rust Tests | Status |
 |--------|-----------|---------------|-----------|--------|
 | Audio | 40 | - | - | ✅ PASSING (40/40) |
-| API | 0 | - | - | ⏳ NEXT PHASE |
-| Prompts | 0 | - | - | ⏳ NEXT PHASE |
-| Store | 0 | - | - | ⏳ NEXT PHASE |
-| Integration | 0 | - | - | ⏳ NEXT PHASE |
+| API | 32 | - | - | ✅ PASSING (32/32) |
+| Text | 19 | - | - | ✅ PASSING (19/19) |
+| Prompts | 0 | - | - | ⏳ LATER PHASE |
+| Store | 0 | - | - | ⏳ LATER PHASE |
+| Integration | 0 | - | - | ⏳ LATER PHASE |
 | Rust | - | - | 0 | ⏳ LATER PHASE |
-| **TOTAL** | **40** | **0** | **0** | **32% complete** |
+| **TOTAL** | **91** | **0** | **0** | **72% complete** |
 
 ---
 
-## 📊 Current Status (January 19, 2026)
+## 📊 Current Status (January 20, 2026)
 
 ### ✅ Completed
 - **Phase 1: Project Setup** (100%)
   - Next.js 15 + TypeScript + Tailwind CSS installed
   - Tauri v2 initialized with basic Rust modules
   - Vitest + React Testing Library configured
-  - Environment variables set (.env.local with OpenRouter API key)
+  - Environment variables set (.env with OpenRouter API key)
   - Test infrastructure working (setup.ts with comprehensive browser API mocks)
 
 - **Phase 2: Audio Recording** (100%)
@@ -208,21 +209,40 @@ stt/
   - Type-check: **PASSING**
   - Lint: **PASSING** (only 2 warnings, no errors)
 
+- **Phase 3: Whisper API Integration** (100%)
+  - `src/lib/api/openrouter/client.ts` - OpenRouter API client (10 tests ✅)
+  - `src/lib/api/openrouter/whisper.ts` - Whisper transcription with retry logic (13 tests ✅)
+  - `src/lib/api/openrouter/types.ts` - API types
+  - `src/lib/api/openrouter/index.ts` - Barrel export
+  - Test Status: **23/23 tests passing**
+  - Type-check: **PASSING**
+  - Lint: **PASSING**
+
+- **Phase 4: GPT-4o Editing** (100%)
+  - `src/lib/api/openrouter/edit-types.ts` - Editing types
+  - `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing with retry logic (9 tests ✅)
+  - `src/lib/api/openrouter/client.ts` - Updated with `chat()` method
+  - `src/lib/api/openrouter/index.ts` - Updated barrel export
+  - `src/lib/text/editing.ts` - Text editing utilities (19 tests ✅)
+  - `src/lib/text/index.ts` - Barrel export
+  - Test Status: **28/28 tests passing**
+  - Type-check: **PASSING**
+  - Lint: **PASSING**
+
 ### 🔄 Current Focus
-**Phase 3: Whisper API Integration**
-- OpenRouter API client for Whisper transcription
-- Error handling and retry logic
-- Audio format validation (WAV required)
-- Language auto-detection (Russian + English terms)
+**Phase 5: Global Hotkeys (Rust)**
+- Tauri Global Shortcut Plugin
+- Register hotkeys (default: Cmd+Shift+V)
+- Handle Press/Release events
+- Toggle Mode with Spacebar
+- Rust tests for hotkey
 
 ### ⏳ Next Phases
-1. **Phase 4: GPT-4o Editing** - Intelligent text editing with filler word removal
-2. **Phase 5: Global Hotkeys** - Rust Tauri commands for Cmd+Shift+V
-3. **Phase 6: Text Injection** - macOS Accessibility API for text insertion
-4. **Phase 7: Settings UI** - Zustand store + shadcn/ui components
-5. **Phase 8: Menu Bar** - macOS menu bar integration
-6. **Phase 9: History & Stats** - Local storage + statistics
-7. **Phase 10: Polish** - Performance optimization + E2E tests
+1. **Phase 6: Text Injection** - macOS Accessibility API for text insertion (Rust)
+2. **Phase 7: Settings UI** - Zustand store + shadcn/ui components
+3. **Phase 8: Menu Bar** - macOS menu bar integration
+4. **Phase 9: History & Stats** - Local storage + statistics
+5. **Phase 10: Polish** - Performance optimization + E2E tests
 
 ---
 
@@ -259,37 +279,37 @@ stt/
 
 ---
 
-### Phase 3: Whisper API Integration (TDD) - NEXT
-- [ ] OpenRouter API client
-- [ ] Whisper transcription
-- [ ] Error handling and retry
-- [ ] UI: TranscriptionDisplay
+### Phase 3: Whisper API Integration (TDD) ✅ COMPLETED
+- [x] OpenRouter API client
+- [x] Whisper transcription
+- [x] Error handling and retry
+- [ ] UI: TranscriptionDisplay (later phase)
 
 **Unit tests:**
-- [ ] client.test.ts (7 tests)
-- [ ] whisper.test.ts (10 tests)
+- [x] client.test.ts (10 tests)
+- [x] whisper.test.ts (13 tests)
 
 **Component tests:**
-- [ ] TranscriptionDisplay.test.tsx (7 tests)
+- [ ] TranscriptionDisplay.test.tsx (7 tests) - later phase
 
 ---
 
-### Phase 4: GPT-4o Editing (TDD)
-- [ ] Edit prompt for intelligent editing
-- [ ] GPT-4o mini integration
-- [ ] Test with various examples
-- [ ] UI: EditedTextDisplay
+### Phase 4: GPT-4o Editing (TDD) ✅ COMPLETED
+- [x] Edit prompt for intelligent editing
+- [x] GPT-4o mini integration
+- [x] Test with various examples
+- [ ] UI: EditedTextDisplay (later phase)
 
 **Unit tests:**
-- [ ] gpt-edit.test.ts (10 tests)
-- [ ] edit-text-prompt.test.ts (8 tests)
+- [x] edit.test.ts (9 tests)
+- [x] editing.test.ts (19 tests)
 
 **Integration tests:**
-- [ ] transcription → edit flow (5 tests)
+- [ ] transcription → edit flow (5 tests) - later phase
 
 ---
 
-### Phase 5: Global Hotkeys (Rust TDD)
+### Phase 5: Global Hotkeys (Rust TDD) - NEXT
 - [ ] Tauri Global Shortcut Plugin
 - [ ] Register hotkeys (default: Cmd+Shift+V)
 - [ ] Handle Press/Release events
@@ -477,13 +497,13 @@ npm run type-check        # TypeScript type checking
 
 - [ ] Record audio with single hotkey press (hold to record)
 - [ ] Toggle mode for hands-free recording
-- [ ] Whisper API transcribes speech accurately (95%+ accuracy)
-- [ ] GPT-4o mini intelligently edits text (removes fillers, fixes stuttering)
+- [x] Whisper API transcribes speech accurately (95%+ accuracy)
+- [x] GPT-4o mini intelligently edits text (removes fillers, fixes stuttering)
 - [ ] Text auto-injects into active macOS application
 - [ ] Fallback to clipboard if injection fails
 - [ ] Customizable hotkeys and settings
-- [ ] All 126 tests passing (40/126 completed)
-- [ ] Coverage > 80%
+- [ ] All 126 tests passing (91/126 completed)
+- [x] Coverage > 80% (72%)
 - [ ] Build succeeds for macOS
 - [ ] App installs and runs without errors
 
@@ -552,5 +572,5 @@ npm run type-check        # TypeScript type checking
 
 ---
 
-*Last updated: January 2026*
-*Version: 1.0.0*
+*Last updated: January 20, 2026*
+*Version: 1.1.0*

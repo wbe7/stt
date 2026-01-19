@@ -1,7 +1,7 @@
 # AGENTS.md - Voice Dictation App (Wispr Flow Clone)
 
-*Last updated: January 19, 2026*
-*Version: 0.4.0 - Phase 3 Complete, Phase 4 Next*
+*Last updated: January 20, 2026*
+*Version: 0.5.0 - Phase 4 Complete, Phase 5 Next*
 
 ## Project Overview
 Voice dictation AI application using Next.js, Tauri, and OpenRouter with Whisper. Speech-to-text with AI auto-editing for macOS desktop.
@@ -170,9 +170,9 @@ src/
 │   └── features/          # Feature-specific components
 ├── lib/                   # Utilities & helpers
 │   ├── api/              # API clients (OpenRouter)
-│   │   └── openrouter/  # OpenRouter API (Phase 3 complete)
+│   │   └── openrouter/  # OpenRouter API (Phase 3 & 4 complete)
 │   ├── audio/            # Audio processing (Phase 2 complete)
-│   └── text/            # Text editing utilities (Phase 4 next)
+│   └── text/            # Text editing utilities (Phase 4 complete)
 ├── store/                 # Zustand stores
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript types
@@ -233,12 +233,20 @@ if (result.success) {
 - WAV format validation (25MB max)
 - Error handling for client (4xx) and server (5xx) errors
 
-### Text Editing
-- Remove filler words (um, uh, like)
+### Text Editing (✅ COMPLETE)
+- GPT-4o mini integration for intelligent editing
+- Remove filler words (ээ, ну, um, like, etc.)
 - Fix stuttering and repetitions
 - Punctuation insertion
 - Capitalization correction
-- Tone adjustment (casual/formal)
+- Tone adjustment (casual/formal/preserve)
+- Local text editing utilities:
+  - `removeFillerWords()` - Remove Russian/English filler words
+  - `fixStuttering()` - Fix word repetitions
+  - `insertPunctuation()` - Add period at end and between languages
+  - `correctCapitalization()` - Fix capitalization
+  - `adjustTone()` - Adjust text tone
+  - `editTextLocally()` - Apply all edits in sequence
 
 ### macOS Integration (Tauri)
 - Global hotkeys (`Cmd+Shift+V`)
@@ -268,7 +276,7 @@ if (result.success) {
 4. [x] Create PRD.md
 5. [x] Implement basic voice recording (Phase 2 - Audio)
 6. [x] Integrate Whisper API (Phase 3)
-7. [ ] Add text editing features (Phase 4)
+7. [x] Add text editing features (Phase 4)
 8. [ ] Implement macOS hotkeys (Phase 5)
 9. [ ] Add personal dictionary (Phase 9)
 10. [ ] Create snippet library (Phase 9)
@@ -276,13 +284,13 @@ if (result.success) {
 
 ---
 
-## Current Progress (January 19, 2026)
+## Current Progress (January 20, 2026)
 
 ### Phase 1: Project Setup ✅ COMPLETED
 - Next.js 15 + TypeScript + Tailwind CSS installed
 - Tauri v2 initialized
 - Vitest + React Testing Library configured
-- Environment variables set (.env.local with OpenRouter API key)
+- Environment variables set (.env with OpenRouter API key)
 - Test infrastructure working (setup.ts with proper mocks)
 
 ### Phase 2: Audio Recording ✅ COMPLETED (40/40 tests passing)
@@ -339,8 +347,42 @@ Type-check: PASSING
 Lint: PASSING
 ```
 
+### Phase 4: GPT-4o Text Editing ✅ COMPLETED (28/28 tests passing)
+**Implemented:**
+- `src/lib/api/openrouter/edit-types.ts` - Editing types (EditRequest, EditResponse, EditConfig, Message)
+- `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing with retry logic
+- `src/lib/api/openrouter/client.ts` - Updated with `chat()` method for GPT-4o
+- `src/lib/api/openrouter/index.ts` - Updated barrel export
+- `src/lib/text/editing.ts` - Text editing utilities
+- `src/lib/text/index.ts` - Barrel export
+
+**Features:**
+- GPT-4o mini integration for intelligent editing
+- Remove filler words (Russian: ээ, ну, это, etc. | English: um, uh, like, etc.)
+- Fix stuttering and repetitions
+- Insert punctuation (period at end, between language transitions)
+- Correct capitalization
+- Adjust tone (casual/formal/preserve)
+- Local text editing utilities that work without API
+- Retry logic with exponential backoff
+- Error handling for client (4xx) and server (5xx) errors
+
+**Tests (all passing):**
+- `src/__tests__/unit/api/edit.test.ts` - 9 tests
+- `src/__tests__/unit/text/editing.test.ts` - 19 tests
+
+**Test Status:**
+```
+✓ src/__tests__/unit/api/edit.test.ts (9 tests)
+✓ src/__tests__/unit/text/editing.test.ts (19 tests)
+
+Test Files: 2 passed
+Tests: 28 passed
+Type-check: PASSING
+Lint: PASSING
+```
+
 **Next Steps:**
-- Phase 4: GPT-4o Text Editing
 - Phase 5: Global Hotkeys (Rust)
 - Phase 6: Text Injection (Rust)
 - Phase 7: Settings & Customization

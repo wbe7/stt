@@ -3,7 +3,7 @@
 ## Context
 Building a voice dictation AI application that turns speech into polished text with intelligent editing. Target platform: macOS desktop using Tauri v2 + Next.js 15.
 
-## Current Status (January 19, 2026)
+## Current Status (January 20, 2026)
 
 ### ✅ COMPLETED PHASES
 
@@ -11,7 +11,7 @@ Building a voice dictation AI application that turns speech into polished text w
 - Next.js 15 + TypeScript + Tailwind CSS installed
 - Tauri v2 initialized with Rust backend
 - Vitest + React Testing Library configured
-- Environment variables configured (.env.local with OpenRouter API key)
+- Environment variables configured (.env with OpenRouter API key)
 - Test infrastructure working with comprehensive browser API mocks
 
 **Phase 2: Audio Recording** (100% complete)
@@ -31,20 +31,29 @@ Building a voice dictation AI application that turns speech into polished text w
 - WAV format validation (25MB max)
 - Retry logic with exponential backoff
 - Language auto-detection support
-- Test Status: **63/63 tests passing**
+- Test Status: **23/23 tests passing**
+- Type-check: **PASSING**
+- Lint: **PASSING**
+
+**Phase 4: GPT-4o Editing** (100% complete)
+- `src/lib/api/openrouter/edit-types.ts` - Editing types
+- `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing with retry logic (9 tests ✅)
+- `src/lib/api/openrouter/client.ts` - Updated with `chat()` method for GPT-4o
+- `src/lib/text/editing.ts` - Text editing utilities (19 tests ✅)
+- `src/lib/text/index.ts` - Barrel export
+- Features: Remove filler words, fix stuttering, insert punctuation, correct capitalization, adjust tone
+- Test Status: **28/28 tests passing**
 - Type-check: **PASSING**
 - Lint: **PASSING**
 
 ### 🔄 NEXT PHASE TO IMPLEMENT
 
-**Phase 4: GPT-4o Editing**
-- OpenRouter API client for GPT-4o mini
-- Intelligent text editing functions
-- Filler word removal (um, uh, like)
-- Stuttering and repetition fix
-- Punctuation insertion
-- Capitalization correction
-- Tone adjustment (casual/formal)
+**Phase 5: Global Hotkeys** (Rust)
+- Tauri Global Shortcut Plugin
+- Register hotkeys (default: Cmd+Shift+V)
+- Handle Press/Release events
+- Toggle Mode with Spacebar
+- Rust tests for hotkey
 
 ### ⏳ REMAINING PHASES (Not Started)
 1. **Phase 5: Global Hotkeys** - Tauri commands for Cmd+Shift+V (Rust)
@@ -80,16 +89,12 @@ DEFAULT_EDIT_MODEL=openai/gpt-4o-mini
 
 ## Key Requirements
 
-### Phase 4: GPT-4o Editing (NEXT)
-1. Create `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing function
-2. Create `src/lib/api/openrouter/edit-types.ts` - Editing types
-3. Create text editing utility functions:
-   - `removeFillerWords()` - Remove um, uh, like
-   - `fixStuttering()` - Fix repetitions
-   - `insertPunctuation()` - Add proper punctuation
-   - `correctCapitalization()` - Fix capital letters
-4. Write unit tests for text editing (15 tests)
-5. Test with actual transcription output from Phase 3
+### Phase 5: Global Hotkeys (NEXT - Rust)
+1. Tauri Global Shortcut Plugin
+2. Register hotkeys (default: Cmd+Shift+V)
+3. Handle Press/Release events
+4. Toggle Mode with Spacebar
+5. Rust tests for hotkey
 
 ### Future Phases Overview
 - **Phase 5-6**: Rust Tauri commands for macOS integration (hotkeys, text injection)
@@ -217,9 +222,16 @@ if (result.success) {
   console.log(result.data.text) // Transcribed text
   console.log(result.data.language) // Detected language
 }
+
+// Features:
+// - WAV format validation (required by Whisper API)
+// - File size validation (25MB max)
+// - Retry logic with exponential backoff
+// - Language auto-detection (if language not specified)
+// - Error handling for client (4xx) and server (5xx) errors
 ```
 
-### OpenRouter GPT-4o Mini (NEXT - Phase 4)
+### OpenRouter GPT-4o Mini (✅ COMPLETE)
 ```typescript
 // Endpoint: https://openrouter.ai/api/v1/chat/completions
 // Method: POST
@@ -229,6 +241,24 @@ if (result.success) {
 // Body:
 //   model: openai/gpt-4o-mini
 //   messages: [{ role: "user", content: "Edit this text..." }]
+
+// Usage:
+import { editText } from '@/lib/api/openrouter'
+
+const result = await editText('ээ это надо сделать', { mode: 'medium', tone: 'preserve' })
+if (result.success) {
+  console.log(result.data.editedText) // Edited text
+}
+
+// Features:
+// - Intelligent text editing with GPT-4o mini
+// - Remove filler words (ээ, ну, um, like, etc.)
+// - Fix stuttering and repetitions
+// - Insert proper punctuation
+// - Correct capitalization
+// - Adjust tone (casual/formal/preserve)
+// - Retry logic with exponential backoff
+// - Error handling for client (4xx) and server (5xx) errors
 ```
 
 ### Audio Format Requirements
@@ -299,7 +329,7 @@ describe('ModuleName', () => {
 - `package.json` - Dependencies configured
 - `tsconfig.json` - TypeScript strict mode
 - `vitest.config.ts` - Test configuration
-- `.env.local` - OpenRouter API key
+- `.env` - OpenRouter API key
 
 **Phase 2: Audio Recording**
 - `src/lib/audio/recorder.ts` - VoiceRecorder class
@@ -320,14 +350,22 @@ describe('ModuleName', () => {
 - `src/__tests__/unit/api/client.test.ts` - 10 tests
 - `src/__tests__/unit/api/whisper.test.ts` - 13 tests
 
-### ⏳ Next Files to Create
 **Phase 4: GPT-4o Editing**
-- `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing function
-- `src/lib/api/openrouter/edit-types.ts` - Editing types
-- `src/lib/text/editing.ts` - Text editing utilities (removeFillerWords, fixStuttering, etc.)
+- `src/lib/api/openrouter/edit-types.ts` - Editing types (EditRequest, EditResponse, EditConfig, Message)
+- `src/lib/api/openrouter/edit.ts` - GPT-4o mini editing with retry logic
+- `src/lib/api/openrouter/client.ts` - Updated with `chat()` method
+- `src/lib/api/openrouter/index.ts` - Updated barrel export
+- `src/lib/text/editing.ts` - Text editing utilities (removeFillerWords, fixStuttering, insertPunctuation, correctCapitalization, adjustTone, editTextLocally)
 - `src/lib/text/index.ts` - Barrel export
-- `src/__tests__/unit/api/edit.test.ts` - GPT-4o editing tests (8 tests)
-- `src/__tests__/unit/text/editing.test.ts` - Text utility tests (7 tests)
+- `src/__tests__/unit/api/edit.test.ts` - 9 tests
+- `src/__tests__/unit/text/editing.test.ts` - 19 tests
+
+### ⏳ Next Files to Create
+**Phase 5: Global Hotkeys (Rust)**
+- `src-tauri/src/commands/hotkey.rs` - Tauri global hotkey commands
+- `src-tauri/src/utils/hotkey_parser.rs` - Hotkey string parsing utility
+- `src-tauri/src/tests/hotkey.test.rs` - Rust tests for hotkey module
+- Integration tests for hotkey → recording flow
 
 ---
 
@@ -340,50 +378,38 @@ describe('ModuleName', () => {
 5. **Audio Format**: Phase 2 outputs WAV, which is compatible with Whisper API
 6. **Error Handling**: Always wrap async operations in try-catch
 7. **Documentation**: Update PRD.md and AGENTS.md as features are completed
+8. **Context7 MCP**: Always use context7 MCP for all libraries - use `codesearch` or `context7_query-docs` tools before implementing any library-specific code
 
 ---
 
 ## Progress Tracking
 
-- **Total Tests**: 63/126 passing (50% complete)
-- **Phases Completed**: 3/10 (30%)
-- **Estimated Time Remaining**: ~16 hours
+- **Total Tests**: 91/126 passing (72% complete)
+- **Phases Completed**: 4/10 (40%)
+- **Estimated Time Remaining**: ~12 hours
 
 ---
 
-## Next Immediate Tasks (Phase 4)
+## Next Immediate Tasks (Phase 5 - Global Hotkeys)
 
-1. Create `src/lib/api/openrouter/edit-types.ts` with:
-   - EditRequest interface
-   - EditResponse interface
-   - EditConfig interface (filler words, tone, etc.)
-   - TextEditOptions interface
+1. Create `src-tauri/src/commands/hotkey.rs`:
+   - Tauri command for registering global hotkeys
+   - Handle Press/Release events
+   - Support for Cmd+Shift+V (default)
 
-2. Create `src/lib/api/openrouter/edit.ts` with:
-   - `editText()` function calling GPT-4o mini
-   - Prompt construction for different editing modes
-   - Error handling and retry logic
+2. Create `src-tauri/src/utils/hotkey_parser.rs`:
+   - Parse hotkey strings (e.g., "Cmd+Shift+V")
+   - Convert to platform-specific key codes
 
-3. Create `src/lib/text/editing.ts` with utility functions:
-   - `removeFillerWords(text: string, fillers: string[]): string`
-   - `fixStuttering(text: string): string`
-   - `insertPunctuation(text: string): string`
-   - `correctCapitalization(text: string): string`
-   - `adjustTone(text: string, tone: 'casual' | 'formal'): string`
+3. Write Rust tests in `src-tauri/src/tests/hotkey.test.rs` (6 tests):
+   - Hotkey registration
+   - Key press/release handling
+   - Toggle mode with Spacebar
+   - Error handling
 
-4. Create `src/lib/text/index.ts` barrel export
-
-5. Write tests:
-   - `src/__tests__/unit/api/edit.test.ts` (8 tests):
-     - GPT-4o client initialization
-     - Edit request with different modes
-     - Error handling and retries
-     - Response parsing
-   - `src/__tests__/unit/text/editing.test.ts` (7 tests):
-     - Remove filler words
-     - Fix stuttering patterns
-     - Insert punctuation
-     - Correct capitalization
+4. Integration tests (4 tests):
+   - Hotkey → recording flow
+   - Toggle mode functionality
 
 ---
 
@@ -409,5 +435,5 @@ describe('ModuleName', () => {
 
 ---
 
-*Last updated: January 19, 2026*
-*Version: 0.4.0 - Phase 3 Complete, Phase 4 Next*
+*Last updated: January 20, 2026*
+*Version: 0.5.0 - Phase 4 Complete, Phase 5 Next*

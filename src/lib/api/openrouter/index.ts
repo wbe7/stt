@@ -1,3 +1,5 @@
 export * from './types'
+export * from './edit-types'
 export { OpenRouterClient } from './client'
 export { transcribeAudio } from './whisper'
+export { editText } from './edit'
