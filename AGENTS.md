@@ -1,7 +1,7 @@
 # AGENTS.md - Voice Dictation App (Wispr Flow Clone)
 
 *Last updated: January 20, 2026*
-*Version: 0.7.0 - Phase 6 Complete, Phase 7 Next*
+*Version: 0.7.0 - Phase 7 Complete, Phase 8 Next*
 
 ## Project Overview
 Voice dictation AI application using Next.js, Tauri, and OpenRouter with Whisper. Speech-to-text with AI auto-editing for macOS desktop.
@@ -448,6 +448,36 @@ Lint: PASSING
 
 Test Files: 2 passed
 Tests: 21 passed
+Type-check: PASSING
+Lint: PASSING
+```
+
+**Phase 7: Settings & Customization** ✅ COMPLETED (8/8 tests passing)
+**Implemented:**
+- `src/store/settings-store.ts` - Zustand store with persistence (8 tests ✅)
+- `src/components/features/Settings/SettingsPanel.tsx` - Settings panel UI
+- `src/components/features/Settings/HotkeyEditor.tsx` - Hotkey editor component
+- `src/components/features/Settings/ModelSelector.tsx` - Model selector component
+- `src/components/features/Settings/index.ts` - Barrel export
+
+**Features:**
+- Settings management with Zustand
+- Persistence with zustand/persist middleware
+- Hotkey editor with key capture
+- Model selector for AI models
+- Language and editing level selectors
+- Auto-paste and notifications toggles
+- Reset settings functionality
+
+**Tests (all passing):**
+- `src/__tests__/unit/store/settings-store.test.ts` (8 tests) - Settings initialization, update hotkey, update edit model, update editing level, update language, toggle autoPaste, toggle showNotifications, reset settings to default
+
+**Test Status:**
+```
+✓ src/__tests__/unit/store/settings-store.test.ts (8 tests)
+
+Test Files: 1 passed
+Tests: 8 passed
 Type-check: PASSING
 Lint: PASSING
 ```

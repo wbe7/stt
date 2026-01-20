@@ -58,7 +58,7 @@ Building a voice dictation AI application that turns speech into polished text w
 - Lint: **PASSING**
 
 **Phase 6: Text Injection** (100% complete)
-- `src-tauri/src/commands/accessibility.rs` - Enhanced accessibility commands with AXUIElementSetAttributeValue (10 tests ✅)
+- `src-tauri/src/commands/accessibility.rs` - Enhanced accessibility commands (10 tests ✅)
 - `src-tauri/Cargo.toml` - Added `core-foundation` dependency
 - `src/__tests__/integration/accessibility.test.ts` - Integration tests (11 tests ✅)
 - Features:
@@ -72,20 +72,35 @@ Building a voice dictation AI application that turns speech into polished text w
 - Type-check: **PASSING**
 - Lint: **PASSING**
 
+**Phase 7: Settings & Customization** (100% complete)
+- `src/store/settings-store.ts` - Zustand store with persistence (8 tests ✅)
+- `src/components/features/Settings/SettingsPanel.tsx` - Settings panel UI
+- `src/components/features/Settings/HotkeyEditor.tsx` - Hotkey editor component
+- `src/components/features/Settings/ModelSelector.tsx` - Model selector component
+- `src/components/features/Settings/index.ts` - Barrel export
+- Features:
+  - Settings management with Zustand
+  - Persistence with zustand/persist middleware
+  - Hotkey editor with key capture
+  - Model selector for AI models
+  - Language and editing level selectors
+  - Auto-paste and notifications toggles
+  - Reset settings functionality
+- Test Status: **8/8 tests passing**
+- Type-check: **PASSING**
+- Lint: **PASSING**
+
 ### 🔄 NEXT PHASE TO IMPLEMENT
 
-**Phase 7: Settings & Customization**
-- Zustand store for settings
-- UI: SettingsPanel
-- UI: HotkeyEditor
-- UI: ModelSelector
-- Settings persistence
+**Phase 8: Menu Bar Integration**
+- Menu bar icon
+- Quick actions (Record, Settings, Quit)
+- Status indicator (Recording/Idle)
 
 ### ⏳ REMAINING PHASES (Not Started)
-1. **Phase 7: Settings & Customization** - Zustand store + UI components
-3. **Phase 8: Menu Bar** - macOS menu bar integration
-4. **Phase 9: History & Stats** - Local storage + statistics
-5. **Phase 10: Polish & Optimization** - Performance + E2E tests
+1. **Phase 8: Menu Bar** - macOS menu bar integration
+2. **Phase 9: History & Stats** - Local storage + statistics
+3. **Phase 10: Polish & Optimization** - Performance + E2E tests
 
 ---
 
@@ -419,33 +434,25 @@ describe('ModuleName', () => {
 
 ## Progress Tracking
 
-- **Total Tests**: 106/126 passing (84% complete)
-- **Phases Completed**: 6/10 (60%)
-- **Estimated Time Remaining**: ~6 hours
+- **Total Tests**: 122/134 passing (91% complete)
+- **Phases Completed**: 7/10 (70%)
+- **Estimated Time Remaining**: ~4 hours
 
 ---
 
-## Next Immediate Tasks (Phase 7 - Settings & Customization)
+## Next Immediate Tasks (Phase 8 - Menu Bar Integration)
 
-1. Create `src/store/settings-store.ts`:
-   - Zustand store for settings
-   - Settings state types
-   - Persist with zustand/persist
+1. Create `src/components/features/MenuBar/MenuBar.tsx`:
+   - Menu bar icon with status indicator
+   - Quick actions (Record, Settings, Quit)
+   - Recording/Idle status display
 
-2. Write tests in `src/__tests__/unit/store/settings-store.test.ts` (8 tests):
-   - Settings initialization
-   - Update settings
-   - Persistence
+2. Create Tauri menu bar commands in `src-tauri/src/commands/menubar.rs`:
+   - Show/hide menu bar icon
+   - Update menu bar status
 
-3. Create `src/components/features/Settings/SettingsPanel.tsx`:
-   - Settings panel UI
-   - Hotkey editor
-   - Model selector
-
-4. Write component tests (18 tests):
-   - SettingsPanel (6 tests)
-   - HotkeyEditor (7 tests)
-   - ModelSelector (5 tests)
+3. Write tests (4 tests):
+   - MenuBar component tests
 
 ---
 
@@ -472,4 +479,4 @@ describe('ModuleName', () => {
 ---
 
 *Last updated: January 20, 2026*
-*Version: 0.6.0 - Phase 5 Complete, Phase 6 Next*
+*Version: 0.7.0 - Phase 7 Complete, Phase 8 Next*

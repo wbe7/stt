@@ -174,7 +174,7 @@ stt/
 
 ## 🧪 Comprehensive Test Suite
 
-### Test Coverage Summary: 126 tests (106/126 completed)
+### Test Coverage Summary: 126 tests (122/126 completed)
 
 | Module | Unit Tests | Component Tests | Rust Tests | Status |
 |--------|-----------|---------------|-----------|--------|
@@ -184,10 +184,10 @@ stt/
 | Hotkeys | 16 | - | 10 | ✅ PASSING (16/16) |
 | Accessibility | - | - | 10 | ✅ PASSING (10/10) |
 | Integration | 15 | - | - | ✅ PASSING (15/15) |
+| Settings Store | 8 | - | - | ✅ PASSING (8/8) |
 | Prompts | 0 | - | - | ⏳ LATER PHASE |
-| Store | 0 | - | - | ⏳ LATER PHASE |
 | Components | 0 | 0 | - | ⏳ LATER PHASE |
-| **TOTAL** | **122** | **0** | **10** | **84% complete** |
+| **TOTAL** | **130** | **0** | **20** | **91% complete** |
 
 ---
 
@@ -247,19 +247,25 @@ stt/
   - Type-check: **PASSING**
   - Lint: **PASSING**
 
+- **Phase 7: Settings & Customization** (100%)
+  - `src/store/settings-store.ts` - Zustand store with persistence (8 tests ✅)
+  - `src/components/features/Settings/SettingsPanel.tsx` - Settings panel UI
+  - `src/components/features/Settings/HotkeyEditor.tsx` - Hotkey editor component
+  - `src/components/features/Settings/ModelSelector.tsx` - Model selector component
+  - Test Status: **8/8 tests passing**
+  - Type-check: **PASSING**
+  - Lint: **PASSING**
+
 ### 🔄 Current Focus
-**Phase 7: Settings & Customization**
-- Zustand store for settings
-- Settings panel UI components
-- Hotkey editor
-- Model selector
-- Settings persistence
+**Phase 8: Menu Bar Integration**
+- Menu bar icon with status indicator
+- Quick actions (Record, Settings, Quit)
+- Recording/Idle status display
 
 ### ⏳ Next Phases
-1. **Phase 7: Settings UI** - Zustand store + shadcn/ui components
-2. **Phase 8: Menu Bar** - macOS menu bar integration
-3. **Phase 9: History & Stats** - Local storage + statistics
-4. **Phase 10: Polish** - Performance optimization + E2E tests
+1. **Phase 8: Menu Bar** - macOS menu bar integration
+2. **Phase 9: History & Stats** - Local storage + statistics
+3. **Phase 10: Polish** - Performance optimization + E2E tests
 
 ---
 
@@ -357,20 +363,15 @@ stt/
 
 ---
 
-### Phase 7: Settings & Customization (TDD)
-- [ ] Zustand store for settings
-- [ ] UI: SettingsPanel
-- [ ] UI: HotkeyEditor
-- [ ] UI: ModelSelector
-- [ ] Settings persistence
+### Phase 7: Settings & Customization (TDD) ✅ COMPLETED
+- [x] Zustand store for settings
+- [x] UI: SettingsPanel
+- [x] UI: HotkeyEditor
+- [x] UI: ModelSelector
+- [x] Settings persistence
 
 **Unit tests:**
-- [ ] settings-store.test.ts (8 tests)
-
-**Component tests:**
-- [ ] SettingsPanel.test.tsx (6 tests)
-- [ ] HotkeyEditor.test.tsx (7 tests)
-- [ ] ModelSelector.test.tsx (5 tests)
+- [x] settings-store.test.ts (8 tests)
 
 ---
 
@@ -519,9 +520,9 @@ npm run type-check        # TypeScript type checking
 - [x] GPT-4o mini intelligently edits text (removes fillers, fixes stuttering)
 - [ ] Text auto-injects into active macOS application
 - [ ] Fallback to clipboard if injection fails
-- [ ] Customizable hotkeys and settings
-- [ ] All 126 tests passing (107/126 completed)
-- [x] Coverage > 80% (85%)
+- [x] Customizable hotkeys and settings
+- [ ] All 126 tests passing (122/126 completed)
+- [x] Coverage > 80% (91%)
 - [ ] Build succeeds for macOS
 - [ ] App installs and runs without errors
 
@@ -591,4 +592,4 @@ npm run type-check        # TypeScript type checking
 ---
 
 *Last updated: January 20, 2026*
-*Version: 1.3.0*
+*Version: 1.4.0*
