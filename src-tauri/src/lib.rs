@@ -17,6 +17,7 @@ fn main() {
             commands::accessibility::get_focused_app,
             commands::accessibility::inject_text,
             commands::accessibility::request_permission,
+            commands::accessibility::check_permission,
             commands::clipboard::write_text,
             commands::clipboard::read_text,
             commands::permissions::check_permissions,

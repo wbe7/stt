@@ -1,7 +1,7 @@
 # AGENTS.md - Voice Dictation App (Wispr Flow Clone)
 
 *Last updated: January 20, 2026*
-*Version: 0.6.0 - Phase 5 Complete, Phase 6 Next*
+*Version: 0.7.0 - Phase 6 Complete, Phase 7 Next*
 
 ## Project Overview
 Voice dictation AI application using Next.js, Tauri, and OpenRouter with Whisper. Speech-to-text with AI auto-editing for macOS desktop.
@@ -422,8 +422,37 @@ Type-check: PASSING
 Lint: PASSING
 ```
 
+### Phase 6: Text Injection ✅ COMPLETED (21/21 tests passing)
+**Implemented:**
+- `src-tauri/src/commands/accessibility.rs` - Enhanced accessibility commands (10 tests ✅)
+- `src-tauri/Cargo.toml` - Added `core-foundation` dependency
+- `src/__tests__/integration/accessibility.test.ts` - Integration tests (11 tests ✅)
+
+**Features:**
+- macOS Accessibility API (AXUIElementSetAttributeValue) for text injection
+- Get active application (bundle_id, name)
+- Insert text at cursor using kAXSelectedTextAttribute
+- Check for TextField/TextArea roles before injection
+- Fallback to clipboard + Cmd+V when accessibility fails
+- Request/check accessibility permissions
+- Error handling with detailed messages
+
+**Tests (all passing):**
+- `src-tauri/src/commands/accessibility.rs` (10 tests) - inject_text_result_serialization, parse_inject_text_result, focused_app_info_serialization, parse_focused_app_info, empty_text_injection, long_text_injection, unicode_text_injection, special_characters_injection, newline_handling, inject_text_result_with_message
+- `src/__tests__/integration/accessibility.test.ts` (11 tests) - type definitions, edit → inject flow, error handling
+
+**Test Status:**
+```
+✓ src-tauri/src/commands/accessibility.rs (10 tests)
+✓ src/__tests__/integration/accessibility.test.ts (11 tests)
+
+Test Files: 2 passed
+Tests: 21 passed
+Type-check: PASSING
+Lint: PASSING
+```
+
 **Next Steps:**
-- Phase 6: Text Injection (Rust)
 - Phase 7: Settings & Customization
 - Phase 8: Menu Bar Integration
 - Phase 9: History & Stats

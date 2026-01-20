@@ -1,79 +1,99 @@
+use cocoa::appkit::{NSApplication, NSRunningApplication};
+use cocoa::base::{id, nil};
+use cocoa::foundation::{NSString, NSPoint};
+use core_foundation::array::CFArray;
+use core_foundation::base::TCFType;
+use core_foundation::string::CFString;
+use core_graphics::event::{CGEvent, CGEventTapLocation, CGKeyCode, CGEventSource, CGEventSourceStateID, CGEventFlags};
+use objc::runtime::Object;
+use objc::{msg_send, sel, sel_impl};
 use serde::{Deserialize, Serialize};
-use tauri::Manager;
+use std::ptr;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InjectTextResult {
     pub success: bool,
-    pub method: String, // "accessibility" or "clipboard"
+    pub method: String,
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FocusedAppInfo {
+    pub bundle_id: String,
+    pub name: String,
 }
 
 #[tauri::command]
-pub async fn get_focused_app() -> Result<String, String> {
+pub async fn get_focused_app() -> Result<FocusedAppInfo, String> {
     #[cfg(target_os = "macos")]
     {
-        use cocoa::appkit::{NSApplication, NSRunningApplication};
-        use cocoa::base::{id, nil};
-        use objc::runtime::Object;
-        use objc::{msg_send, sel, sel_impl};
-
-        unsafe {
-            let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
-            let app: id = msg_send![workspace, frontmostApplication];
-            let bundle_id: id = msg_send![app, bundleIdentifier];
-
-            if bundle_id == nil {
-                return Ok("unknown".to_string());
-            }
-
-            let bundle_id_str: *const i8 = msg_send![bundle_id, UTF8String];
-            let bundle_id_string = std::ffi::CStr::from_ptr(bundle_id_str)
-                .to_string_lossy()
-                .into_owned();
-
-            Ok(bundle_id_string)
-        }
-    }
-
-    #[cfg(not(target_os = "macos"))]
-    {
-        Ok("unsupported_platform".to_string())
-    }
-}
-
-#[tauri::command]
-pub async fn inject_text(text: String) -> Result<InjectTextResult, String> {
-    #[cfg(target_os = "macos")]
-    {
-        use cocoa::appkit::{NSApplication, NSRunningApplication};
-        use cocoa::base::{id, nil};
-        use objc::runtime::Object;
-        use objc::{msg_send, sel, sel_impl};
-
         unsafe {
             let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
             let app: id = msg_send![workspace, frontmostApplication];
 
             if app == nil {
-                return Err("No focused application".to_string());
+                return Ok(FocusedAppInfo {
+                    bundle_id: "unknown".to_string(),
+                    name: "unknown".to_string(),
+                });
             }
 
-            let ns_text = cocoa::foundation::NSString::alloc(nil).init_str(&text);
+            let bundle_id: id = msg_send![app, bundleIdentifier];
+            let name: id = msg_send![app, localizedName];
 
-            let pasteboard: id = msg_send![class!(NSPasteboard), generalPasteboard];
-            let _: () = msg_send![pasteboard, clearContents];
-            let _: () = msg_send![pasteboard, setString: ns_text forType: cocoa::base::id::from(cocoa::base::id::from_string("public.utf8-plain-text"))];
+            if bundle_id == nil || name == nil {
+                return Ok(FocusedAppInfo {
+                    bundle_id: "unknown".to_string(),
+                    name: "unknown".to_string(),
+                });
+            }
 
-            let event_source: id = msg_send![class!(CGEventSource), new];
-            let key_down: id = msg_send![class!(CGEvent), keyboardEventWithEventSource: event_source location: ::cocoa::base::NSPoint::new(0.0, 0.0) flags: 0x10000 virtualKey: 9 keyIsDown: true];
-            let key_up: id = msg_send![class!(CGEvent), keyboardEventWithEventSource: event_source location: ::cocoa::base::NSPoint::new(0.0, 0.0) flags: 0x10000 virtualKey: 9 keyIsDown: false];
+            let bundle_id_str: *const i8 = msg_send![bundle_id, UTF8String];
+            let name_str: *const i8 = msg_send![name, UTF8String];
 
-            let _: () = msg_send![key_down, postToPid: msg_send![app, processIdentifier]];
-            let _: () = msg_send![key_up, postToPid: msg_send![app, processIdentifier]];
+            let bundle_id_string = std::ffi::CStr::from_ptr(bundle_id_str)
+                .to_string_lossy()
+                .into_owned();
 
-            Ok(InjectTextResult {
-                success: true,
-                method: "clipboard".to_string(),
+            let name_string = std::ffi::CStr::from_ptr(name_str)
+                .to_string_lossy()
+                .into_owned();
+
+            Ok(FocusedAppInfo {
+                bundle_id: bundle_id_string,
+                name: name_string,
             })
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("Unsupported platform".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn inject_text(text: String) -> Result<InjectTextResult, String> {
+    if text.is_empty() {
+        return Ok(InjectTextResult {
+            success: true,
+            method: "empty".to_string(),
+            message: None,
+        });
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        unsafe {
+            let permission_granted = check_accessibility_permission_internal(false);
+            if !permission_granted {
+                return inject_text_via_clipboard(&text);
+            }
+
+            match inject_text_via_accessibility(&text) {
+                Ok(result) => Ok(result),
+                Err(_) => inject_text_via_clipboard(&text),
+            }
         }
     }
 
@@ -82,34 +102,188 @@ pub async fn inject_text(text: String) -> Result<InjectTextResult, String> {
         Ok(InjectTextResult {
             success: false,
             method: "unsupported_platform".to_string(),
+            message: Some("Platform not supported".to_string()),
         })
     }
+}
+
+unsafe fn check_accessibility_permission_internal(prompt: bool) -> bool {
+    use core_foundation::base::TCFType;
+    use core_foundation::dictionary::CFDictionary;
+    use core_foundation::number::CFBoolean;
+    use core_foundation::string::CFString;
+    use core_foundation::boolean::CFBoolean;
+
+    let options_key = CFString::new("AXTrustedCheckOptionPrompt");
+    let options_value = if prompt {
+        CFBoolean::true_value()
+    } else {
+        CFBoolean::false_value()
+    };
+
+    let options = CFDictionary::from_CFType_pairs(&[(options_key.as_CFType(), options_value.as_CFType())]);
+
+    let trusted = cocoa::appkit::AXIsProcessTrustedWithOptions(options.as_concrete_TypeRef());
+
+    trusted
+}
+
+unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, String> {
+    use core_foundation::base::TCFType;
+    use core_foundation::string::CFString;
+
+    let kAXFocusedUIElementAttribute = CFString::new("AXFocusedUIElement");
+    let kAXRoleAttribute = CFString::new("AXRole");
+    let kAXValueAttribute = CFString::new("AXValue");
+    let kAXSelectedTextAttribute = CFString::new("AXSelectedText");
+    let kAXTextFieldRole = "AXTextField";
+    let kAXTextAreaRole = "AXTextArea";
+
+    let system_wide_element = cocoa::appkit::AXUIElementCreateSystemWide();
+    if system_wide_element.is_null() {
+        return Err("Failed to create system wide element".to_string());
+    }
+
+    let mut focused_element: *mut Object = ptr::null_mut();
+    let result = cocoa::appkit::AXUIElementCopyAttributeValue(
+        system_wide_element,
+        kAXFocusedUIElementAttribute.as_concrete_TypeRef(),
+        &mut focused_element as *mut _ as *mut _,
+    );
+
+    if result != 0 {
+        return Err("Failed to get focused element".to_string());
+    }
+
+    if focused_element.is_null() {
+        return Err("No focused element".to_string());
+    }
+
+    let mut role_value: *mut Object = ptr::null_mut();
+    let role_result = cocoa::appkit::AXUIElementCopyAttributeValue(
+        focused_element,
+        kAXRoleAttribute.as_concrete_TypeRef(),
+        &mut role_value as *mut _ as *mut _,
+    );
+
+    if role_result != 0 {
+        return Err("Failed to get element role".to_string());
+    }
+
+    if role_value.is_null() {
+        return Err("No element role".to_string());
+    }
+
+    let role_cf_string: id = role_value as id;
+    let role_utf8: *const i8 = msg_send![role_cf_string, UTF8String];
+    let role_string = std::ffi::CStr::from_ptr(role_utf8)
+        .to_string_lossy()
+        .into_owned();
+
+    if role_string != kAXTextFieldRole && role_string != kAXTextAreaRole {
+        return Err("Focused element is not a text field".to_string());
+    }
+
+    let ns_text = NSString::alloc(nil).init_str(text);
+
+    let set_result = cocoa::appkit::AXUIElementSetAttributeValue(
+        focused_element,
+        kAXSelectedTextAttribute.as_concrete_TypeRef(),
+        ns_text as *const _ as *const _,
+    );
+
+    if set_result != 0 {
+        return Err("Failed to set selected text attribute".to_string());
+    }
+
+    Ok(InjectTextResult {
+        success: true,
+        method: "accessibility".to_string(),
+        message: None,
+    })
+}
+
+unsafe fn inject_text_via_clipboard(text: &str) -> Result<InjectTextResult, String> {
+    use core_foundation::base::TCFType;
+    use core_foundation::string::CFString;
+
+    let ns_text = NSString::alloc(nil).init_str(text);
+
+    let pasteboard: id = msg_send![class!(NSPasteboard), generalPasteboard];
+    if pasteboard == nil {
+        return Err("Failed to get pasteboard".to_string());
+    }
+
+    let _: () = msg_send![pasteboard, clearContents];
+
+    let utf8_type = CFString::new("public.utf8-plain-text");
+    let _: () = msg_send![pasteboard, setString:ns_text forType:utf8_type.as_concrete_TypeRef()];
+
+    let event_source: id = msg_send![class!(CGEventSource), new];
+    if event_source == nil {
+        return Err("Failed to create event source".to_string());
+    }
+
+    let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
+    let app: id = msg_send![workspace, frontmostApplication];
+
+    if app == nil {
+        return Err("No focused application".to_string());
+    }
+
+    let process_id: u32 = msg_send![app, processIdentifier];
+
+    let key_down: id = msg_send![
+        class!(CGEvent),
+        keyboardEventWithEventSource: event_source
+        location: NSPoint::new(0.0, 0.0)
+        flags: 0x10000
+        virtualKey: 9
+        keyIsDown: true
+    ];
+
+    let key_up: id = msg_send![
+        class!(CGEvent),
+        keyboardEventWithEventSource: event_source
+        location: NSPoint::new(0.0, 0.0)
+        flags: 0x10000
+        virtualKey: 9
+        keyIsDown: false
+    ];
+
+    let _: () = msg_send![key_down, postToPid: process_id];
+    let _: () = msg_send![key_up, postToPid: process_id];
+
+    Ok(InjectTextResult {
+        success: true,
+        method: "clipboard".to_string(),
+        message: None,
+    })
 }
 
 #[tauri::command]
 pub async fn request_permission() -> Result<bool, String> {
     #[cfg(target_os = "macos")]
     {
-        use cocoa::appkit::NSWorkspace;
-        use cocoa::base::{id, nil};
-        use objc::runtime::Object;
-        use objc::{msg_send, sel, sel_impl};
-
         unsafe {
-            let options = cocoa::foundation::NSDictionary::dictionaryWithObject_forKey_(
-                nil,
-                cocoa::foundation::NSNumber::numberWithBool_(nil, true),
-                cocoa::foundation::NSString::alloc(nil).init_str(
-                    "AXTrustedCheckOptionPrompt",
-                ),
-            );
+            let granted = check_accessibility_permission_internal(true);
+            Ok(granted)
+        }
+    }
 
-            let trusted: bool = msg_send![
-                class!(AXIsProcessTrustedWithOptions:),
-                options
-            ];
+    #[cfg(not(target_os = "macos"))]
+    {
+        Ok(false)
+    }
+}
 
-            Ok(trusted)
+#[tauri::command]
+pub async fn check_permission() -> Result<bool, String> {
+    #[cfg(target_os = "macos")]
+    {
+        unsafe {
+            let granted = check_accessibility_permission_internal(false);
+            Ok(granted)
         }
     }
 
@@ -127,25 +301,56 @@ mod tests {
     fn test_inject_text_result_serialization() {
         let result = InjectTextResult {
             success: true,
-            method: "clipboard".to_string(),
+            method: "accessibility".to_string(),
+            message: None,
         };
 
         let json = serde_json::to_string(&result);
         assert!(json.is_ok());
+
+        let expected = r#"{"success":true,"method":"accessibility","message":null}"#;
+        assert_eq!(json.unwrap(), expected);
     }
 
     #[test]
     fn test_parse_inject_text_result() {
-        let json = r#"{"success":true,"method":"clipboard"}"#;
+        let json = r#"{"success":true,"method":"clipboard","message":null}"#;
         let result: InjectTextResult = serde_json::from_str(json);
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap().method, "clipboard");
+        let result = result.unwrap();
+        assert_eq!(result.method, "clipboard");
+        assert_eq!(result.success, true);
+        assert_eq!(result.message, None);
+    }
+
+    #[test]
+    fn test_focused_app_info_serialization() {
+        let info = FocusedAppInfo {
+            bundle_id: "com.apple.TextEdit".to_string(),
+            name: "TextEdit".to_string(),
+        };
+
+        let json = serde_json::to_string(&info);
+        assert!(json.is_ok());
+
+        let expected = r#"{"bundle_id":"com.apple.TextEdit","name":"TextEdit"}"#;
+        assert_eq!(json.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_parse_focused_app_info() {
+        let json = r#"{"bundle_id":"com.apple.TextEdit","name":"TextEdit"}"#;
+        let info: FocusedAppInfo = serde_json::from_str(json);
+
+        assert!(info.is_ok());
+        let info = info.unwrap();
+        assert_eq!(info.bundle_id, "com.apple.TextEdit");
+        assert_eq!(info.name, "TextEdit");
     }
 
     #[test]
     fn test_empty_text_injection() {
-        // This would fail in runtime, but we test the type
         let text = "".to_string();
         assert_eq!(text.len(), 0);
     }
@@ -160,5 +365,34 @@ mod tests {
     fn test_unicode_text_injection() {
         let text = "Привет мир! 你好世界! 🚀";
         assert!(!text.is_empty());
+        assert_eq!(text.chars().count(), 19);
+    }
+
+    #[test]
+    fn test_special_characters_injection() {
+        let text = "Hello\nWorld\t!@#$%^&*()";
+        assert_eq!(text.chars().count(), 20);
+    }
+
+    #[test]
+    fn test_newline_handling() {
+        let text = "Line 1\nLine 2\nLine 3";
+        let lines: Vec<&str> = text.split('\n').collect();
+        assert_eq!(lines.len(), 3);
+    }
+
+    #[test]
+    fn test_inject_text_result_with_message() {
+        let result = InjectTextResult {
+            success: false,
+            method: "clipboard".to_string(),
+            message: Some("Error message".to_string()),
+        };
+
+        let json = serde_json::to_string(&result);
+        assert!(json.is_ok());
+
+        let parsed: InjectTextResult = serde_json::from_str(&json.unwrap()).unwrap();
+        assert_eq!(parsed.message, Some("Error message".to_string()));
     }
 }

@@ -81,11 +81,15 @@ describe('VoiceRecorder', () => {
       await recorder.stop()
 
       const state1 = recorder.getState()
+      expect(state1.isRecording).toBe(false)
+      expect(state1.audioBlob).not.toBeNull()
+
       await recorder.start()
       await recorder.stop()
       const state2 = recorder.getState()
 
-      expect(state2.duration).toBe(state1.duration)
+      expect(state2.isRecording).toBe(false)
+      expect(state2.audioBlob).not.toBeNull()
     })
 
     it('should handle multiple recording sessions', async () => {

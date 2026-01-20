@@ -174,7 +174,7 @@ stt/
 
 ## 🧪 Comprehensive Test Suite
 
-### Test Coverage Summary: 126 tests (107/126 completed)
+### Test Coverage Summary: 126 tests (106/126 completed)
 
 | Module | Unit Tests | Component Tests | Rust Tests | Status |
 |--------|-----------|---------------|-----------|--------|
@@ -182,11 +182,12 @@ stt/
 | API | 32 | - | - | ✅ PASSING (32/32) |
 | Text | 19 | - | - | ✅ PASSING (19/19) |
 | Hotkeys | 16 | - | 10 | ✅ PASSING (16/16) |
+| Accessibility | - | - | 10 | ✅ PASSING (10/10) |
+| Integration | 15 | - | - | ✅ PASSING (15/15) |
 | Prompts | 0 | - | - | ⏳ LATER PHASE |
 | Store | 0 | - | - | ⏳ LATER PHASE |
-| Integration | 4 | - | - | ✅ PASSING (4/4) |
-| Rust | - | - | 10 | ✅ PASSING (10/10) |
-| **TOTAL** | **111** | **0** | **10** | **85% complete** |
+| Components | 0 | 0 | - | ⏳ LATER PHASE |
+| **TOTAL** | **122** | **0** | **10** | **84% complete** |
 
 ---
 
@@ -230,13 +231,29 @@ stt/
   - Type-check: **PASSING**
   - Lint: **PASSING**
 
+- **Phase 5: Global Hotkeys** (100%)
+  - `src-tauri/src/commands/hotkey.rs` - Enhanced hotkey commands with press/release events (10 tests ✅)
+  - `src/hooks/useGlobalHotkey.ts` - React hook for hotkey integration (2 tests ✅)
+  - `src/types/hotkey.ts` - Hotkey event and state types
+  - Test Status: **16/16 tests passing**
+  - Type-check: **PASSING**
+  - Lint: **PASSING**
+
+- **Phase 6: Text Injection** (100%)
+  - `src-tauri/src/commands/accessibility.rs` - Enhanced accessibility commands (10 tests ✅)
+  - `src-tauri/Cargo.toml` - Added `core-foundation` dependency
+  - `src/__tests__/integration/accessibility.test.ts` - Integration tests (11 tests ✅)
+  - Test Status: **21/21 tests passing**
+  - Type-check: **PASSING**
+  - Lint: **PASSING**
+
 ### 🔄 Current Focus
-**Phase 6: Text Injection (Rust)**
-- macOS Accessibility API (AXUIElementSetAttributeValue)
-- Get active application
-- Insert text at cursor
-- Fallback: Clipboard + Cmd+V
-- Rust tests for accessibility
+**Phase 7: Settings & Customization**
+- Zustand store for settings
+- Settings panel UI components
+- Hotkey editor
+- Model selector
+- Settings persistence
 
 ### ⏳ Next Phases
 1. **Phase 7: Settings UI** - Zustand store + shadcn/ui components
@@ -324,18 +341,19 @@ stt/
 
 ---
 
-### Phase 6: Text Injection (Rust TDD) - NEXT
-- [ ] macOS Accessibility API (AXUIElementSetAttributeValue)
-- [ ] Get active application
-- [ ] Insert text at cursor
-- [ ] Fallback: Clipboard + Cmd+V
-- [ ] Rust tests for accessibility
+### Phase 6: Text Injection (Rust TDD) ✅ COMPLETED
+- [x] macOS Accessibility API (AXUIElementSetAttributeValue)
+- [x] Get active application (bundle_id, name)
+- [x] Insert text at cursor using kAXSelectedTextAttribute
+- [x] Check for TextField/TextArea roles
+- [x] Fallback: Clipboard + Cmd+V
+- [x] Rust tests for accessibility
 
 **Rust tests:**
-- [ ] accessibility.rs (6 tests)
+- [x] accessibility.rs (10 tests)
 
 **Integration tests:**
-- [ ] edit → inject flow (5 tests)
+- [x] accessibility.test.ts (11 tests)
 
 ---
 
@@ -573,4 +591,4 @@ npm run type-check        # TypeScript type checking
 ---
 
 *Last updated: January 20, 2026*
-*Version: 1.2.0*
+*Version: 1.3.0*

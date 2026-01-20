@@ -57,18 +57,32 @@ Building a voice dictation AI application that turns speech into polished text w
 - Type-check: **PASSING**
 - Lint: **PASSING**
 
+**Phase 6: Text Injection** (100% complete)
+- `src-tauri/src/commands/accessibility.rs` - Enhanced accessibility commands with AXUIElementSetAttributeValue (10 tests ✅)
+- `src-tauri/Cargo.toml` - Added `core-foundation` dependency
+- `src/__tests__/integration/accessibility.test.ts` - Integration tests (11 tests ✅)
+- Features:
+  - macOS Accessibility API (AXUIElementSetAttributeValue) for text injection
+  - Get active application (bundle_id, name)
+  - Insert text at cursor using kAXSelectedTextAttribute
+  - Fallback to clipboard + Cmd+V when accessibility fails
+  - Check for TextField/TextArea roles before injection
+  - Request/check accessibility permissions
+- Test Status: **21/21 tests passing**
+- Type-check: **PASSING**
+- Lint: **PASSING**
+
 ### 🔄 NEXT PHASE TO IMPLEMENT
 
-**Phase 6: Text Injection** (Rust)
-- macOS Accessibility API (AXUIElementSetAttributeValue)
-- Get active application
-- Insert text at cursor
-- Fallback: Clipboard + Cmd+V
-- Rust tests for accessibility
+**Phase 7: Settings & Customization**
+- Zustand store for settings
+- UI: SettingsPanel
+- UI: HotkeyEditor
+- UI: ModelSelector
+- Settings persistence
 
 ### ⏳ REMAINING PHASES (Not Started)
-1. **Phase 6: Text Injection** - macOS Accessibility API for text insertion (Rust)
-2. **Phase 7: Settings & Customization** - Zustand store + UI components
+1. **Phase 7: Settings & Customization** - Zustand store + UI components
 3. **Phase 8: Menu Bar** - macOS menu bar integration
 4. **Phase 9: History & Stats** - Local storage + statistics
 5. **Phase 10: Polish & Optimization** - Performance + E2E tests
@@ -405,32 +419,33 @@ describe('ModuleName', () => {
 
 ## Progress Tracking
 
-- **Total Tests**: 107/126 passing (85% complete)
-- **Phases Completed**: 5/10 (50%)
-- **Estimated Time Remaining**: ~8 hours
+- **Total Tests**: 106/126 passing (84% complete)
+- **Phases Completed**: 6/10 (60%)
+- **Estimated Time Remaining**: ~6 hours
 
 ---
 
-## Next Immediate Tasks (Phase 6 - Text Injection)
+## Next Immediate Tasks (Phase 7 - Settings & Customization)
 
-1. Create `src-tauri/src/commands/accessibility.rs`:
-   - macOS Accessibility API (AXUIElementSetAttributeValue)
-   - Get active application
-   - Insert text at cursor
+1. Create `src/store/settings-store.ts`:
+   - Zustand store for settings
+   - Settings state types
+   - Persist with zustand/persist
 
-2. Create `src-tauri/src/utils/mac_accessibility.rs`:
-   - macOS accessibility utilities
-   - AXUIElement helpers
+2. Write tests in `src/__tests__/unit/store/settings-store.test.ts` (8 tests):
+   - Settings initialization
+   - Update settings
+   - Persistence
 
-3. Write Rust tests in `src-tauri/src/tests/accessibility.test.rs` (6 tests):
-   - Get focused app
-   - Text injection
-   - Error handling
-   - Clipboard fallback
+3. Create `src/components/features/Settings/SettingsPanel.tsx`:
+   - Settings panel UI
+   - Hotkey editor
+   - Model selector
 
-4. Integration tests (4 tests):
-   - Edit → inject flow
-   - Accessibility error handling
+4. Write component tests (18 tests):
+   - SettingsPanel (6 tests)
+   - HotkeyEditor (7 tests)
+   - ModelSelector (5 tests)
 
 ---
 

@@ -34,15 +34,15 @@ export function useGlobalHotkey(): UseGlobalHotkeyReturn {
   const [error, setError] = useState<string | null>(null)
 
   const invoke = (command: string, args?: Record<string, unknown>) => {
-    if (typeof window !== 'undefined' && (window as Record<string, unknown>).__TAURI__) {
-      return ((window as Record<string, Record<string, unknown>>).__TAURI__ as Record<string, Record<string, unknown>>).core.invoke(command, args)
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.core.invoke(command, args)
     }
     return Promise.reject(new Error('Tauri API not available'))
   }
 
   const listen = (event: string, handler: (event: { payload: unknown }) => void) => {
-    if (typeof window !== 'undefined' && (window as Record<string, unknown>).__TAURI__) {
-      return ((window as Record<string, Record<string, unknown>>).__TAURI__ as Record<string, Record<string, unknown>>).event.listen(event, handler)
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen(event, handler)
     }
     return Promise.resolve(() => {})
   }
