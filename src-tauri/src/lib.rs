@@ -21,6 +21,8 @@ fn main() {
             commands::clipboard::write_text,
             commands::clipboard::read_text,
             commands::permissions::check_permissions,
+            commands::menubar::create_tray,
+            commands::menubar::update_tray_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

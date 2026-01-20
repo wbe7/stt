@@ -2,7 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 
 declare global {
   interface Window {
-    __TAURI__?: unknown
+    __TAURI__?: {
+      core: {
+        invoke: (command: string, args?: Record<string, unknown>) => Promise<unknown>
+      }
+      event: {
+        listen: (event: string, handler: (event: { payload: unknown }) => void) => Promise<() => void>
+      }
+    }
   }
 }
 
@@ -34,15 +41,15 @@ export function useGlobalHotkey(): UseGlobalHotkeyReturn {
   const [error, setError] = useState<string | null>(null)
 
   const invoke = (command: string, args?: Record<string, unknown>) => {
-    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
-      return (window as any).__TAURI__.core.invoke(command, args)
+    if (typeof window !== 'undefined' && window.__TAURI__) {
+      return window.__TAURI__.core.invoke(command, args)
     }
     return Promise.reject(new Error('Tauri API not available'))
   }
 
   const listen = (event: string, handler: (event: { payload: unknown }) => void) => {
-    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
-      return (window as any).__TAURI__.event.listen(event, handler)
+    if (typeof window !== 'undefined' && window.__TAURI__) {
+      return window.__TAURI__.event.listen(event, handler)
     }
     return Promise.resolve(() => {})
   }
