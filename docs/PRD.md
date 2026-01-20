@@ -174,18 +174,19 @@ stt/
 
 ## 🧪 Comprehensive Test Suite
 
-### Test Coverage Summary: 126 tests (91/126 completed)
+### Test Coverage Summary: 126 tests (107/126 completed)
 
 | Module | Unit Tests | Component Tests | Rust Tests | Status |
 |--------|-----------|---------------|-----------|--------|
 | Audio | 40 | - | - | ✅ PASSING (40/40) |
 | API | 32 | - | - | ✅ PASSING (32/32) |
 | Text | 19 | - | - | ✅ PASSING (19/19) |
+| Hotkeys | 16 | - | 10 | ✅ PASSING (16/16) |
 | Prompts | 0 | - | - | ⏳ LATER PHASE |
 | Store | 0 | - | - | ⏳ LATER PHASE |
-| Integration | 0 | - | - | ⏳ LATER PHASE |
-| Rust | - | - | 0 | ⏳ LATER PHASE |
-| **TOTAL** | **91** | **0** | **0** | **72% complete** |
+| Integration | 4 | - | - | ✅ PASSING (4/4) |
+| Rust | - | - | 10 | ✅ PASSING (10/10) |
+| **TOTAL** | **111** | **0** | **10** | **85% complete** |
 
 ---
 
@@ -230,19 +231,18 @@ stt/
   - Lint: **PASSING**
 
 ### 🔄 Current Focus
-**Phase 5: Global Hotkeys (Rust)**
-- Tauri Global Shortcut Plugin
-- Register hotkeys (default: Cmd+Shift+V)
-- Handle Press/Release events
-- Toggle Mode with Spacebar
-- Rust tests for hotkey
+**Phase 6: Text Injection (Rust)**
+- macOS Accessibility API (AXUIElementSetAttributeValue)
+- Get active application
+- Insert text at cursor
+- Fallback: Clipboard + Cmd+V
+- Rust tests for accessibility
 
 ### ⏳ Next Phases
-1. **Phase 6: Text Injection** - macOS Accessibility API for text insertion (Rust)
-2. **Phase 7: Settings UI** - Zustand store + shadcn/ui components
-3. **Phase 8: Menu Bar** - macOS menu bar integration
-4. **Phase 9: History & Stats** - Local storage + statistics
-5. **Phase 10: Polish** - Performance optimization + E2E tests
+1. **Phase 7: Settings UI** - Zustand store + shadcn/ui components
+2. **Phase 8: Menu Bar** - macOS menu bar integration
+3. **Phase 9: History & Stats** - Local storage + statistics
+4. **Phase 10: Polish** - Performance optimization + E2E tests
 
 ---
 
@@ -309,22 +309,22 @@ stt/
 
 ---
 
-### Phase 5: Global Hotkeys (Rust TDD) - NEXT
-- [ ] Tauri Global Shortcut Plugin
-- [ ] Register hotkeys (default: Cmd+Shift+V)
-- [ ] Handle Press/Release events
-- [ ] Toggle Mode with Spacebar
-- [ ] Rust tests for hotkey
+### Phase 5: Global Hotkeys (Rust TDD) ✅ COMPLETED
+- [x] Tauri Global Shortcut Plugin
+- [x] Register hotkeys (default: Cmd+Shift+V)
+- [x] Handle Press/Release events
+- [x] Toggle Mode with Spacebar
+- [x] Rust tests for hotkey
 
 **Rust tests:**
-- [ ] hotkey.rs (6 tests)
+- [x] hotkey.rs (10 tests)
 
 **Integration tests:**
-- [ ] hotkey → recording flow (4 tests)
+- [x] hotkey → recording flow (4 tests)
 
 ---
 
-### Phase 6: Text Injection (Rust TDD)
+### Phase 6: Text Injection (Rust TDD) - NEXT
 - [ ] macOS Accessibility API (AXUIElementSetAttributeValue)
 - [ ] Get active application
 - [ ] Insert text at cursor
@@ -496,14 +496,14 @@ npm run type-check        # TypeScript type checking
 ## 🎯 Success Criteria
 
 - [ ] Record audio with single hotkey press (hold to record)
-- [ ] Toggle mode for hands-free recording
+- [x] Toggle mode for hands-free recording
 - [x] Whisper API transcribes speech accurately (95%+ accuracy)
 - [x] GPT-4o mini intelligently edits text (removes fillers, fixes stuttering)
 - [ ] Text auto-injects into active macOS application
 - [ ] Fallback to clipboard if injection fails
 - [ ] Customizable hotkeys and settings
-- [ ] All 126 tests passing (91/126 completed)
-- [x] Coverage > 80% (72%)
+- [ ] All 126 tests passing (107/126 completed)
+- [x] Coverage > 80% (85%)
 - [ ] Build succeeds for macOS
 - [ ] App installs and runs without errors
 
@@ -573,4 +573,4 @@ npm run type-check        # TypeScript type checking
 ---
 
 *Last updated: January 20, 2026*
-*Version: 1.1.0*
+*Version: 1.2.0*

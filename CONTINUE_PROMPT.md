@@ -46,22 +46,32 @@ Building a voice dictation AI application that turns speech into polished text w
 - Type-check: **PASSING**
 - Lint: **PASSING**
 
+**Phase 5: Global Hotkeys** (100% complete)
+- `src-tauri/src/commands/hotkey.rs` - Enhanced hotkey commands with press/release events (10 tests ✅)
+- `src/hooks/useGlobalHotkey.ts` - React hook for hotkey integration (2 tests ✅)
+- `src/types/hotkey.ts` - Hotkey event and state types
+- `src/__tests__/integration/hotkey.test.ts` - Integration tests (2 tests ✅)
+- `src/__tests__/hooks/useGlobalHotkey.test.ts` - Hook tests (2 tests ✅)
+- Features: Register/unregister hotkeys, toggle mode with Spacebar, recording state management, event listeners
+- Test Status: **16/16 tests passing**
+- Type-check: **PASSING**
+- Lint: **PASSING**
+
 ### 🔄 NEXT PHASE TO IMPLEMENT
 
-**Phase 5: Global Hotkeys** (Rust)
-- Tauri Global Shortcut Plugin
-- Register hotkeys (default: Cmd+Shift+V)
-- Handle Press/Release events
-- Toggle Mode with Spacebar
-- Rust tests for hotkey
+**Phase 6: Text Injection** (Rust)
+- macOS Accessibility API (AXUIElementSetAttributeValue)
+- Get active application
+- Insert text at cursor
+- Fallback: Clipboard + Cmd+V
+- Rust tests for accessibility
 
 ### ⏳ REMAINING PHASES (Not Started)
-1. **Phase 5: Global Hotkeys** - Tauri commands for Cmd+Shift+V (Rust)
-2. **Phase 6: Text Injection** - macOS Accessibility API for text insertion (Rust)
-3. **Phase 7: Settings & Customization** - Zustand store + UI components
-4. **Phase 8: Menu Bar** - macOS menu bar integration
-5. **Phase 9: History & Stats** - Local storage + statistics
-6. **Phase 10: Polish & Optimization** - Performance + E2E tests
+1. **Phase 6: Text Injection** - macOS Accessibility API for text insertion (Rust)
+2. **Phase 7: Settings & Customization** - Zustand store + UI components
+3. **Phase 8: Menu Bar** - macOS menu bar integration
+4. **Phase 9: History & Stats** - Local storage + statistics
+5. **Phase 10: Polish & Optimization** - Performance + E2E tests
 
 ---
 
@@ -89,15 +99,15 @@ DEFAULT_EDIT_MODEL=openai/gpt-4o-mini
 
 ## Key Requirements
 
-### Phase 5: Global Hotkeys (NEXT - Rust)
-1. Tauri Global Shortcut Plugin
-2. Register hotkeys (default: Cmd+Shift+V)
-3. Handle Press/Release events
-4. Toggle Mode with Spacebar
-5. Rust tests for hotkey
+### Phase 6: Text Injection (NEXT - Rust)
+1. macOS Accessibility API (AXUIElementSetAttributeValue)
+2. Get active application
+3. Insert text at cursor
+4. Fallback: Clipboard + Cmd+V
+5. Rust tests for accessibility
 
 ### Future Phases Overview
-- **Phase 5-6**: Rust Tauri commands for macOS integration (hotkeys, text injection)
+- **Phase 6**: Rust Tauri commands for macOS integration (text injection)
 - **Phase 7-9**: UI components with shadcn/ui (settings, menu bar, history)
 
 ---
@@ -274,8 +284,18 @@ if (result.success) {
 2. Run `npm run lint` - no linting errors
 3. Run `npm run type-check` - no type errors
 4. Review changes for security issues
-5. Update documentation if needed
+5. **Update documentation files (CONTINUE_PROMPT.md, AGENTS.md, docs/PRD.md) after completing a phase**
 6. **MUST commit changes after completing a phase** - Always create a commit after finishing implementation and ensuring all tests pass
+
+## Important: Workflow for Continuing Work
+
+After completing a phase:
+1. Update CONTINUE_PROMPT.md, AGENTS.md, and docs/PRD.md with the latest status
+2. Commit the changes
+3. Start a new chat session
+4. Provide the CONTINUE_PROMPT.md file to the new session
+5. The agent will automatically continue from where the previous session left off
+6. Repeat until all phases are complete
 
 ---
 
@@ -385,32 +405,32 @@ describe('ModuleName', () => {
 
 ## Progress Tracking
 
-- **Total Tests**: 91/126 passing (72% complete)
-- **Phases Completed**: 4/10 (40%)
-- **Estimated Time Remaining**: ~12 hours
+- **Total Tests**: 107/126 passing (85% complete)
+- **Phases Completed**: 5/10 (50%)
+- **Estimated Time Remaining**: ~8 hours
 
 ---
 
-## Next Immediate Tasks (Phase 5 - Global Hotkeys)
+## Next Immediate Tasks (Phase 6 - Text Injection)
 
-1. Create `src-tauri/src/commands/hotkey.rs`:
-   - Tauri command for registering global hotkeys
-   - Handle Press/Release events
-   - Support for Cmd+Shift+V (default)
+1. Create `src-tauri/src/commands/accessibility.rs`:
+   - macOS Accessibility API (AXUIElementSetAttributeValue)
+   - Get active application
+   - Insert text at cursor
 
-2. Create `src-tauri/src/utils/hotkey_parser.rs`:
-   - Parse hotkey strings (e.g., "Cmd+Shift+V")
-   - Convert to platform-specific key codes
+2. Create `src-tauri/src/utils/mac_accessibility.rs`:
+   - macOS accessibility utilities
+   - AXUIElement helpers
 
-3. Write Rust tests in `src-tauri/src/tests/hotkey.test.rs` (6 tests):
-   - Hotkey registration
-   - Key press/release handling
-   - Toggle mode with Spacebar
+3. Write Rust tests in `src-tauri/src/tests/accessibility.test.rs` (6 tests):
+   - Get focused app
+   - Text injection
    - Error handling
+   - Clipboard fallback
 
 4. Integration tests (4 tests):
-   - Hotkey → recording flow
-   - Toggle mode functionality
+   - Edit → inject flow
+   - Accessibility error handling
 
 ---
 
@@ -437,4 +457,4 @@ describe('ModuleName', () => {
 ---
 
 *Last updated: January 20, 2026*
-*Version: 0.5.0 - Phase 4 Complete, Phase 5 Next*
+*Version: 0.6.0 - Phase 5 Complete, Phase 6 Next*

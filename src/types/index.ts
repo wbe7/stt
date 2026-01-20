@@ -29,3 +29,5 @@ export const DEFAULT_SETTINGS: Settings = {
   language: 'ru',
   editingLevel: 'minimal',
 }
+
+export * from './hotkey'

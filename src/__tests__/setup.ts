@@ -201,12 +201,19 @@ global.FormData = class MockFormData {
   }
 
   get(name: string): FormDataEntryValue | null {
-    return this._data.get(name) || null
+    const value = this._data.get(name)
+    if (value === undefined || value === null) {
+      return null
+    }
+    return value as FormDataEntryValue
   }
 
   getAll(name: string): FormDataEntryValue[] {
     const value = this._data.get(name)
-    return value ? [value] : []
+    if (value === undefined || value === null) {
+      return []
+    }
+    return [value as FormDataEntryValue]
   }
 
   has(name: string): boolean {
@@ -276,3 +283,20 @@ global.Blob = class MockBlob {
 } as unknown as typeof Blob
 
 global.BlobEvent = MockBlobEvent as unknown as typeof BlobEvent
+
+type RecordingInfo = {
+  is_recording: boolean
+  mode: string
+  start_time: number | null
+}
+
+type HotkeyEvent = {
+  hotkey: string
+  state: string
+  timestamp: number
+}
+
+declare global {
+  var RecordingInfo: RecordingInfo
+  var HotkeyEvent: HotkeyEvent
+}

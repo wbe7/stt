@@ -1,7 +1,7 @@
 # AGENTS.md - Voice Dictation App (Wispr Flow Clone)
 
 *Last updated: January 20, 2026*
-*Version: 0.5.0 - Phase 4 Complete, Phase 5 Next*
+*Version: 0.6.0 - Phase 5 Complete, Phase 6 Next*
 
 ## Project Overview
 Voice dictation AI application using Next.js, Tauri, and OpenRouter with Whisper. Speech-to-text with AI auto-editing for macOS desktop.
@@ -249,11 +249,17 @@ if (result.success) {
   - `editTextLocally()` - Apply all edits in sequence
 
 ### macOS Integration (Tauri)
-- Global hotkeys (`Cmd+Shift+V`)
+- Global hotkeys (`Cmd+Shift+V`) ✅ COMPLETE
 - Clipboard access
 - Text injection via accessibility APIs
 - Menu bar integration
 - Notification support
+
+### Hotkey System (✅ COMPLETE)
+- Press/Release event handling with timestamp
+- Toggle mode with Spacebar
+- Recording state management
+- React hook for frontend integration
 
 ## Performance Guidelines
 - Debounce rapid API calls
@@ -382,8 +388,41 @@ Type-check: PASSING
 Lint: PASSING
 ```
 
+### Phase 5: Global Hotkeys ✅ COMPLETED (16/16 tests passing)
+**Implemented:**
+- `src-tauri/src/commands/hotkey.rs` - Enhanced hotkey commands with event handling (10 tests ✅)
+- `src/hooks/useGlobalHotkey.ts` - React hook for hotkey integration (2 tests ✅)
+- `src/types/hotkey.ts` - Hotkey event and state types
+- `src/__tests__/integration/hotkey.test.ts` - Integration tests (2 tests ✅)
+- `src/__tests__/hooks/useGlobalHotkey.test.ts` - Hook tests (2 tests ✅)
+
+**Features:**
+- Press/Release event handling with timestamp
+- Toggle mode with Spacebar support
+- Recording state management (isRecording, mode, startTime)
+- Event listeners for hotkey events and recording state changes
+- Register/unregister hotkey commands
+- Get recording state command
+- Extended key code parsing (a-z, 0-9, space, enter, escape)
+
+**Tests (all passing):**
+- `src-tauri/src/commands/hotkey.rs` (10 tests) - parse_simple_hotkey, parse_complex_hotkey, parse_invalid_hotkey, parse_invalid_modifier, parse_space_key, parse_enter_key, parse_alphabetic_keys, parse_digit_keys, recording_mode_default, recording_mode_as_str, recording_state_default
+- `src/__tests__/integration/hotkey.test.ts` (2 tests) - type definitions
+- `src/__tests__/hooks/useGlobalHotkey.test.ts` (2 tests) - type definitions
+
+**Test Status:**
+```
+✓ src-tauri/src/commands/hotkey.rs (10 tests)
+✓ src/__tests__/integration/hotkey.test.ts (2 tests)
+✓ src/__tests__/hooks/useGlobalHotkey.test.ts (2 tests)
+
+Test Files: 3 passed
+Tests: 14 passed
+Type-check: PASSING
+Lint: PASSING
+```
+
 **Next Steps:**
-- Phase 5: Global Hotkeys (Rust)
 - Phase 6: Text Injection (Rust)
 - Phase 7: Settings & Customization
 - Phase 8: Menu Bar Integration
@@ -439,7 +478,17 @@ Lint: PASSING
 2. Run `npm run lint` - no linting errors
 3. Run `npm run type-check` - no type errors
 4. Review changes for security issues
-5. Update documentation if needed
+5. **Update documentation files (CONTINUE_PROMPT.md, AGENTS.md, docs/PRD.md) after completing a phase**
+6. **MUST commit changes after completing a phase** - Always create a commit after finishing implementation and ensuring all tests pass
+
+### Workflow for Continuing Work
+After completing a phase:
+1. Update CONTINUE_PROMPT.md, AGENTS.md, and docs/PRD.md with the latest status
+2. Commit the changes
+3. Start a new chat session
+4. Provide the CONTINUE_PROMPT.md file to the new session
+5. The agent will automatically continue from where the previous session left off
+6. Repeat until all phases are complete
 
 ## Debugging Tips
 
