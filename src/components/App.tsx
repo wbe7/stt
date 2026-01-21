@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import { MenuBar } from '@/components/features/MenuBar'
 import { Mic, Settings, History as HistoryIcon } from 'lucide-react'
 
 const SettingsPanel = lazy(() => import('@/components/features/Settings').then(m => ({ default: m.SettingsPanel })))
@@ -11,18 +13,23 @@ type View = 'home' | 'settings' | 'history'
 export default function App() {
   const [view, setView] = useState<View>('home')
   const [isRecording, setIsRecording] = useState(false)
-
-  const checkRecordingState = async () => {
-    setIsRecording(false)
-  }
-
+  
+  const checkRecordingState = useCallback(async () => {
+    try {
+      const state = await invoke<{ is_recording: boolean }>('get_recording_state')
+      setIsRecording(state.is_recording)
+    } catch (error) {
+      console.error('Failed to get recording state:', error)
+    }
+  }, [])
+  
   useEffect(() => {
     const interval = setInterval(() => {
       checkRecordingState()
     }, 2000)
     return () => clearInterval(interval)
   }, [checkRecordingState])
-
+  
   return (
     <main className="flex min-h-screen flex-col bg-slate-900 text-slate-100">
       <header className="border-b border-slate-700 bg-slate-800">
@@ -57,10 +64,11 @@ export default function App() {
                 Settings
               </button>
             </nav>
+            <MenuBar status={isRecording ? 'recording' : 'idle'} />
           </div>
         </div>
       </header>
-
+      
       <div className="container mx-auto flex-1 px-4 py-8">
         {view === 'home' && (
           <div className="flex flex-col items-center justify-center h-full gap-8">
@@ -70,8 +78,8 @@ export default function App() {
                 AI-powered voice dictation with intelligent editing. Remove filler words, fix stuttering,
                 and get polished text instantly.
               </p>
-            </div>
-
+            </div> 
+            
             <div className="grid gap-6 sm:grid-cols-2 max-w-2xl w-full">
               <div className="flex flex-col items-center gap-4 rounded-lg border border-slate-700 bg-slate-800 p-6">
                 <div className="rounded-full bg-blue-500 p-4">
@@ -81,8 +89,8 @@ export default function App() {
                 <p className="text-center text-sm text-slate-400">
                   Press and hold your hotkey to start recording
                 </p>
-              </div>
-
+              </div> 
+              
               <div className="flex flex-col items-center gap-4 rounded-lg border border-slate-700 bg-slate-800 p-6">
                 <div className="rounded-full bg-green-500 p-4">
                   <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,8 +102,8 @@ export default function App() {
                   Intelligent editing removes filler words and fixes stuttering
                 </p>
               </div>
-            </div>
-
+            </div> 
+            
             <div className="flex flex-col items-center gap-2 text-sm text-slate-500">
               <p>
                 Press <kbd className="rounded bg-slate-700 px-2 py-1">Cmd</kbd> +{' '}
@@ -103,8 +111,8 @@ export default function App() {
                 <kbd className="rounded bg-slate-700 px-2 py-1">V</kbd> to start recording
               </p>
               <p>Add <kbd className="rounded bg-slate-700 px-2 py-1">Space</kbd> for toggle mode</p>
-            </div>
-
+            </div> 
+            
             {isRecording && (
               <div className="rounded-lg bg-red-900/50 border border-red-700 px-6 py-4">
                 <div className="flex items-center gap-3">
@@ -115,7 +123,7 @@ export default function App() {
             )}
           </div>
         )}
-
+        
         {view === 'settings' && (
           <div className="max-w-2xl mx-auto">
             <Suspense fallback={<div className="text-slate-400">Loading settings...</div>}>
@@ -123,7 +131,7 @@ export default function App() {
             </Suspense>
           </div>
         )}
-
+        
         {view === 'history' && (
           <div className="max-w-4xl mx-auto h-[600px]">
             <Suspense fallback={<div className="text-slate-400">Loading history...</div>}>
