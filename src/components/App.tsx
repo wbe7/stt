@@ -1,8 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react'
-import { invoke } from '@tauri-apps/api/core'
-import { MenuBar } from '@/components/features/MenuBar'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { Mic, Settings, History as HistoryIcon } from 'lucide-react'
 
 const SettingsPanel = lazy(() => import('@/components/features/Settings').then(m => ({ default: m.SettingsPanel })))
@@ -14,14 +12,9 @@ export default function App() {
   const [view, setView] = useState<View>('home')
   const [isRecording, setIsRecording] = useState(false)
 
-  const checkRecordingState = useCallback(async () => {
-    try {
-      const state = await invoke<{ is_recording: boolean }>('get_recording_state')
-      setIsRecording(state.is_recording)
-    } catch (error) {
-      console.error('Failed to get recording state:', error)
-    }
-  }, [])
+  const checkRecordingState = async () => {
+    setIsRecording(false)
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -64,7 +57,6 @@ export default function App() {
                 Settings
               </button>
             </nav>
-            <MenuBar status={isRecording ? 'recording' : 'idle'} />
           </div>
         </div>
       </header>
