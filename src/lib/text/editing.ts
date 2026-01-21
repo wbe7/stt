@@ -69,10 +69,10 @@ export function correctCapitalization(text: string): string {
 
   result = result.charAt(0).toUpperCase() + result.slice(1)
 
-  result = result.replace(/([.!?])\s*([а-яёa-z])/g, (match, punct, letter) => {
+  result = result.replace(/([.!?])\s*([а-яёa-z])/g, (_match, punct, letter) => {
     return punct + ' ' + letter.toUpperCase()
   })
-
+  
   return result
 }
 

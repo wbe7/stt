@@ -28,23 +28,26 @@ Turn your speech into polished text with intelligent AI editing. Remove filler w
 
 ### Option 1: Download from GitHub Releases (Recommended for non-developers)
 
-1. Download the latest `.dmg` file from [Releases](../../releases)
-2. Open the `.dmg` file
+1. Download latest `.dmg` file from [Releases](../../releases)
+2. Open `.dmg` file
 3. Drag **Voice Dictation** to your **Applications** folder
-4. Launch the app from Applications or Spotlight
+4. Launch app from Applications or Spotlight
 
 ### Option 2: Build from Source (For developers)
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone git@github.com:wbe7/stt.git
 cd stt
 
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
+
 # Install dependencies
 npm install
-cd src-tauri && cargo install && cd ..
 
-# Build the application
+# Build application
 npm run tauri:build
 ```
 
@@ -59,10 +62,10 @@ The built app will be in `src-tauri/target/release/bundle/dmg/`
 3. Create a new API key
 4. Copy the key (starts with `sk-or-v1-`)
 
-### 2. Configure the Application
+### 2. Configure Application
 
 1. Open **Voice Dictation**
-2. Click **Settings** in the navigation
+2. Click **Settings** in navigation
 3. Scroll to **API ключ OpenRouter**
 4. Paste your API key
 5. Optionally customize:
@@ -73,13 +76,13 @@ The built app will be in `src-tauri/target/release/bundle/dmg/`
 
 ### 3. Grant Permissions
 
-For the app to work correctly, you need to grant these permissions:
+For app to work correctly, you need to grant these permissions:
 
 #### Accessibility (Required)
 
 1. Open **System Settings** → **Privacy & Security** → **Accessibility**
-2. Find **Voice Dictation** in the list
-3. Toggle the switch to **ON**
+2. Find **Voice Dictation** in list
+3. Toggle switch to **ON**
 
 *Why?* The app needs Accessibility permissions to insert text into other applications.
 
@@ -94,13 +97,13 @@ For the app to work correctly, you need to grant these permissions:
 
 ### Basic Recording
 
-1. **Hold** the hotkey combination (default: `Cmd + Shift + V`)
+1. **Hold** hotkey combination (default: `Cmd + Shift + V`)
 2. Speak into your microphone
-3. **Release** the keys to stop recording
+3. **Release** keys to stop recording
 4. The app will:
    - Transcribe your speech using Whisper AI
-   - Edit the text using GPT-4o
-   - Insert the polished text into your active application
+   - Edit text using GPT-4o
+   - Insert polished text into your active application
 
 ### Toggle Mode
 
@@ -112,7 +115,7 @@ For the app to work correctly, you need to grant these permissions:
 ### Viewing History
 
 1. Open **Voice Dictation**
-2. Click **History** in the navigation
+2. Click **History** in navigation
 3. View all your past recordings
 4. Search by keyword or copy text to clipboard
 5. Delete entries you don't need
@@ -120,7 +123,7 @@ For the app to work correctly, you need to grant these permissions:
 ### Checking Statistics
 
 1. Open **History**
-2. View statistics at the top:
+2. View statistics at top:
    - Total recordings
    - Total duration
    - Total words
@@ -141,20 +144,20 @@ For the app to work correctly, you need to grant these permissions:
 
 ### Recording doesn't work
 
-**Problem:** Pressing the hotkey doesn't start recording.
+**Problem:** Pressing hotkey doesn't start recording.
 
 **Solution:**
 1. Check that **Accessibility** permission is granted
-2. Restart the application
+2. Restart application
 3. Try using **Toggle Mode** (`Cmd + Shift + Space`)
 
 ### Text doesn't insert
 
-**Problem:** Text appears in the app but not in your active application.
+**Problem:** Text appears in app but not in your active application.
 
 **Solution:**
 1. Verify **Accessibility** permission is enabled
-2. Make sure you have a text cursor in the target app
+2. Make sure you have a text cursor in target app
 3. Try manually copying from History and pasting
 
 ### Transcription fails
@@ -204,14 +207,14 @@ source "$HOME/.cargo/env"
 # Install dependencies
 npm install
 
-# Start Tauri dev server (includes Next.js)
+# Start Tauri dev server (includes Vite)
 npm run tauri:dev
 ```
 
 This will:
-- Start Next.js dev server on http://localhost:3000
-- Launch the Tauri app with hot reload
-- Show dev tools in the app
+- Start Vite dev server on http://localhost:3000
+- Launch Tauri app with hot reload
+- Show dev tools in app
 
 ### Running Tests
 
@@ -256,7 +259,6 @@ The output will be in `src-tauri/target/release/bundle/`.
 ```
 stt/
 ├── src/
-│   ├── app/                    # Next.js app directory
 │   ├── components/              # React components
 │   │   ├── features/          # Feature-specific components
 │   │   │   ├── History/      # Recording history
@@ -266,18 +268,21 @@ stt/
 │   ├── lib/                   # Utilities & helpers
 │   │   ├── api/             # API clients (OpenRouter)
 │   │   ├── audio/            # Audio processing
-│   │   ├── text/            # Text editing
-│   │   └── utils/           # General utilities
+│   │   └── text/            # Text editing
 │   ├── store/                 # Zustand state management
 │   ├── hooks/                 # Custom React hooks
 │   ├── types/                 # TypeScript types
+│   ├── main.tsx               # React entry point
 │   └── __tests__/            # Test files
 ├── src-tauri/                 # Rust backend (Tauri)
 │   ├── src/
 │   │   ├── commands/         # Tauri commands
 │   │   └── main.rs          # Entry point
 │   └── tauri.conf.json      # Tauri configuration
-└── package.json               # Node.js dependencies
+├── index.html                 # HTML entry point
+├── vite.config.ts            # Vite configuration
+├── package.json              # Node.js dependencies
+└── tsconfig.json             # TypeScript configuration
 ```
 
 ## 🔒 Security
@@ -295,10 +300,10 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the repository
+1. Fork repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ## 📞 Support
@@ -307,9 +312,9 @@ For issues, questions, or suggestions:
 - Open an issue on [GitHub](../../issues)
 - Check existing [documentation](AGENTS.md)
 
-## 🧪 Tech Stack
+## 🛠 Tech Stack
 
-- **Frontend:** Next.js 15 + TypeScript + Tailwind CSS
+- **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS
 - **Desktop:** Tauri v2 (Rust)
 - **AI:** OpenRouter API (Whisper + GPT-4o Mini)
 - **State:** Zustand
@@ -321,7 +326,8 @@ For issues, questions, or suggestions:
 - [Whisper](https://openai.com/research/whisper) - Speech recognition
 - [GPT-4o](https://openai.com/gpt-4o) - Text editing
 - [Tauri](https://tauri.app) - Desktop app framework
-- [Next.js](https://nextjs.org) - React framework
+- [Vite](https://vitejs.dev) - Build tool
+- [React](https://reactjs.org) - UI library
 
 ---
 

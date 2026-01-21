@@ -1,13 +1,13 @@
-# AGENTS.md - Voice Dictation App (Wispr Flow Clone)
+# AGENTS.md - Voice Dictation App
 
 *Last updated: January 21, 2026*
-*Version: 0.9.0 - Phase 9 Complete, Phase 10 Next*
+*Version: 0.1.0 - Production Ready*
 
 ## Project Overview
-Voice dictation AI application using Next.js, Tauri, and OpenRouter with Whisper. Speech-to-text with AI auto-editing for macOS desktop.
+Voice dictation AI application using React, Vite, Tauri, and OpenRouter with Whisper. Speech-to-text with AI auto-editing for macOS desktop.
 
 ## Tech Stack
-- Frontend: Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui
+- Frontend: React 18 + Vite + TypeScript + Tailwind CSS
 - Desktop: Tauri v2 (Rust backend)
 - AI: OpenRouter API (Whisper for transcription, GPT-4o mini for editing)
 - State: Zustand
@@ -19,18 +19,22 @@ Voice dictation AI application using Next.js, Tauri, and OpenRouter with Whisper
 ### Install Dependencies
 ```bash
 npm install
-cd src-tauri && cargo install
+```
+
+### Install Rust (Required for building)
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
 ```
 
 ### Development (Hot Reload)
 ```bash
-npm run dev          # Start Next.js dev server
-npm run tauri:dev    # Start Tauri dev mode (includes Next.js)
+npm run tauri:dev    # Start Tauri dev mode (includes Vite)
 ```
 
 ### Build
 ```bash
-npm run build        # Build Next.js for production
+npm run build          # Build React app with Vite
 npm run tauri:build  # Build Tauri app for current platform
 ```
 
@@ -164,26 +168,29 @@ describe('ComponentName', () => {
 ## Project Structure
 ```
 src/
-├── app/                    # Next.js app directory
-├── components/             # React components
-│   ├── ui/                # Reusable UI components (shadcn/ui)
-│   └── features/          # Feature-specific components
-├── lib/                   # Utilities & helpers
-│   ├── api/              # API clients (OpenRouter)
-│   │   └── openrouter/  # OpenRouter API (Phase 3 & 4 complete)
-│   ├── audio/            # Audio processing (Phase 2 complete)
-│   └── text/            # Text editing utilities (Phase 4 complete)
-├── store/                 # Zustand stores
-├── hooks/                 # Custom React hooks
-├── types/                 # TypeScript types
-└── styles/                # Global styles
+ ├── components/             # React components
+ │   ├── features/          # Feature-specific components
+ │   │   ├── History/      # Recording history
+ │   │   ├── Settings/     # Settings panel
+ │   │   └── MenuBar/      # Menu bar
+ │   └── ui/               # Reusable UI components
+ ├── lib/                   # Utilities & helpers
+ │   ├── api/              # API clients (OpenRouter)
+ │   ├── audio/            # Audio processing
+ │   └── text/            # Text editing utilities
+ ├── store/                 # Zustand stores
+ ├── hooks/                 # Custom React hooks
+ ├── types/                 # TypeScript types
+ ├── main.tsx               # React entry point
+ ├── index.css              # Global styles with Tailwind
+ └── __tests__/            # Test files
 
 src-tauri/
-├── src/
-│   ├── commands/         # Tauri commands
-│   ├── utils/           # Rust utilities
-│   └── main.rs          # Entry point
-└── tauri.conf.json
+ ├── src/
+ │   ├── commands/         # Tauri commands
+ │   ├── lib.rs            # Library exports
+ │   └── main.rs          # Entry point
+ └── tauri.conf.json
 ```
 
 ## API Integration (OpenRouter)
@@ -289,6 +296,7 @@ if (result.success) {
 11. [x] Add menu bar integration (Phase 8)
 12. [x] Add history & stats (Phase 9)
 13. [x] Polish and test (Phase 10)
+14. [x] Migrate from Next.js to Vite for Tauri compatibility
 
 ---
 
@@ -554,14 +562,62 @@ Lint: PASSING
 ```
 
 **Next Steps:**
-- ✅ Phase 10: Polish & Optimization (100% COMPLETE)
-- Project is ready for production use
+- ✅ All Phases Complete - Project is ready for production use
+- ✅ Migrated from Next.js to Vite for better Tauri compatibility
+- ✅ All 137 tests passing
+- Build successful with Vite + Tauri
+
+## Migration to Vite (January 21, 2026)
+
+**Reason for Migration:**
+Next.js with `output: 'export'` was incompatible with Tauri API components that require client-side rendering (CSR), causing build errors during static export.
+
+**Changes Made:**
+- Replaced Next.js with Vite as the build tool
+- Added `vite.config.ts` configuration
+- Added `index.html` entry point
+- Created `src/main.tsx` React entry point
+- Created `src/index.css` with Tailwind CSS
+- Updated `postcss.config.js` to use `@tailwindcss/postcss`
+- Updated TypeScript configuration (`tsconfig.json`, `tsconfig.node.json`)
+- Updated `package.json` scripts to use Vite instead of Next.js
+- Removed `'use client'` directive from components (Vite defaults to CSR)
+- Fixed TypeScript errors in client code
+
+**Files Added:**
+- `vite.config.ts` - Vite configuration
+- `index.html` - HTML entry point
+- `src/main.tsx` - React entry point
+- `src/index.css` - Global CSS file
+- `tsconfig.node.json` - Node TypeScript config
+- `postcss.config.js` - PostCSS configuration
+
+**Files Removed:**
+- `src/app/` - Next.js app directory (replaced with Vite approach)
+- `next.config.ts` - Next.js configuration
+- `next-env.d.ts` - Next.js type declarations
+
+**Test Status:**
+All 137 tests continue to pass after migration to Vite.
 
 ## Common Issues & Solutions
 
 ### Issue: Tauri build fails
-- Solution: Ensure Rust and Cargo are installed
+- Solution: Ensure Rust and Cargo are installed:
+  ```bash
+  rustc --version
+  cargo --version
+  ```
+- If not, install Rust:
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  source "$HOME/.cargo/env"
+  ```
 - Run `source "$HOME/.cargo/env"` before build commands
+- On macOS, ensure Xcode Command Line Tools are installed:
+  ```bash
+  xcode-select --install
+  ```
 
 ### Issue: Audio recording not working
 - Solution: Check microphone permissions in System Settings

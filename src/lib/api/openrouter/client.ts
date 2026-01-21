@@ -1,7 +1,7 @@
 import type {
-  TranscriptionResult,
-  WhisperConfig,
-} from './types'
+   TranscriptionResult,
+   WhisperConfig,
+ } from './types'
 import type { Message as EditMessage } from './edit-types'
 import { DEFAULT_WHISPER_CONFIG } from './types'
 
@@ -69,8 +69,8 @@ export class OpenRouterClient {
       body: JSON.stringify({
         model,
         messages,
-        temperature: 0.7,
-        max_tokens: 1000,
+        temperature: this.config.temperature || 0.7,
+        max_tokens: this.config.maxTokens || 1000,
       }),
     })
 

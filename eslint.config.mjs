@@ -1,10 +1,17 @@
-import { FlatCompatCompat } from "@eslint/eslintrc";
-import eslintConfigNextCoreWebVitals from "eslint-config-next/core-web-vitals.js";
-import eslintConfigNextTypeScript from "eslint-config-next/typescript.js";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
+import eslintConfigNext from "eslint-config-next";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
 
 const flatConfig = [
-  ...FlatCompatCompat.extends(eslintConfigNextCoreWebVitals.default),
-  ...FlatCompatCompat.extends(eslintConfigNextTypeScript.default),
+  ...compat.extends(eslintConfigNext),
   {
     rules: {
       "@next/next/no-html-import-for-document": "off",

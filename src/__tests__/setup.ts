@@ -117,6 +117,12 @@ class MockMediaRecorder {
   onstart: ((event: Event) => void) | null = null
   private _chunks: Blob[] = []
   private _listeners: Map<string, Set<(...args: unknown[]) => void>> = new Map()
+  get chunks() {
+    return this._chunks
+  }
+  addChunk(chunk: Blob) {
+    this._chunks.push(chunk)
+  }
 
   constructor(stream: MediaStream, options: MediaRecorderOptions = {}) {
     this.stream = stream

@@ -40,6 +40,8 @@ export interface WhisperConfig {
   maxRetries?: number
   retryDelay?: number
   maxFileSize?: number
+  temperature?: number
+  maxTokens?: number
 }
 
 export const DEFAULT_WHISPER_CONFIG: WhisperConfig = {
@@ -47,4 +49,6 @@ export const DEFAULT_WHISPER_CONFIG: WhisperConfig = {
   maxRetries: 3,
   retryDelay: 1000,
   maxFileSize: 25 * 1024 * 1024,
+  temperature: 0.7,
+  maxTokens: 1000,
 }
