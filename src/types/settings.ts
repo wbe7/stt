@@ -1,6 +1,7 @@
 export interface Settings {
   hotkey: string
   toggleHotkey: string
+  apiKey: string
   whisperModel: string
   editModel: string
   language: string
@@ -12,6 +13,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   hotkey: 'CommandOrControl+Shift+V',
   toggleHotkey: 'CommandOrControl+Shift+Space',
+  apiKey: '',
   whisperModel: 'whisper-1',
   editModel: 'openai/gpt-4o-mini',
   language: 'ru',

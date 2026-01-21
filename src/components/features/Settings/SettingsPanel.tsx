@@ -34,6 +34,28 @@ export function SettingsPanel(): React.JSX.Element {
       </div>
 
       <div className="settings-section">
+        <h3>API ключ OpenRouter</h3>
+        <input
+          type="password"
+          value={settings.apiKey}
+          onChange={(e) => updateSettings({ apiKey: e.target.value })}
+          placeholder="sk-or-v1-..."
+          className="settings-select"
+        />
+        <p className="text-xs text-slate-400 mt-2">
+          Получите ключ на{' '}
+          <a
+            href="https://openrouter.ai/keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300"
+          >
+            openrouter.ai
+          </a>
+        </p>
+      </div>
+
+      <div className="settings-section">
         <h3>Язык</h3>
         <select
           value={settings.language}
