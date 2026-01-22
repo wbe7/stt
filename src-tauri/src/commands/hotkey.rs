@@ -45,7 +45,7 @@ pub struct RecordingState {
     pub start_time: Option<u64>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct HotkeyState {
     pub recording_state: Mutex<RecordingState>,
 }
@@ -118,7 +118,6 @@ pub async fn register_toggle_hotkey(
 
     let hotkey_clone = hotkey.clone();
     let app_handle_clone = app_handle.clone();
-    let state_clone = state.inner().clone();
 
     app_handle
         .global_shortcut()
@@ -130,7 +129,8 @@ pub async fn register_toggle_hotkey(
             };
 
             if event.state == ShortcutState::Pressed {
-                let mut recording_state = state_clone.recording_state.lock().unwrap();
+                let state = app.state::<HotkeyState>();
+                let mut recording_state = state.recording_state.lock().unwrap();
 
                 if recording_state.is_recording && recording_state.mode == RecordingMode::Toggle {
                     recording_state.is_recording = false;

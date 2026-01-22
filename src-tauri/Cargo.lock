@@ -3415,6 +3415,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cocoa",
+ "core-foundation 0.9.4",
  "core-graphics 0.23.2",
  "objc",
  "serde",

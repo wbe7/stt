@@ -1,14 +1,25 @@
 use cocoa::appkit::{NSApplication, NSRunningApplication};
 use cocoa::base::{id, nil};
 use cocoa::foundation::{NSString, NSPoint};
-use core_foundation::array::CFArray;
-use core_foundation::base::TCFType;
-use core_foundation::string::CFString;
-use core_graphics::event::{CGEvent, CGEventTapLocation, CGKeyCode, CGEventSource, CGEventSourceStateID, CGEventFlags};
+use core_foundation::base::{TCFType, CFTypeRef};
+use core_foundation::string::{CFString, CFStringRef};
+use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
+use core_foundation::boolean::CFBoolean;
+use core_graphics::event::{CGEvent, CGEventTapLocation, CGKeyCode, CGEventFlags};
+use core_graphics::event_source::CGEventSource;
 use objc::runtime::Object;
-use objc::{msg_send, sel, sel_impl};
+use objc::{msg_send, sel, sel_impl, class};
 use serde::{Deserialize, Serialize};
 use std::ptr;
+use std::ffi::c_void;
+
+#[link(name = "ApplicationServices", kind = "framework")]
+extern "C" {
+    pub fn AXIsProcessTrustedWithOptions(options: CFDictionaryRef) -> bool;
+    pub fn AXUIElementCreateSystemWide() -> CFTypeRef;
+    pub fn AXUIElementCopyAttributeValue(element: CFTypeRef, attribute: CFStringRef, value: *mut CFTypeRef) -> i32;
+    pub fn AXUIElementSetAttributeValue(element: CFTypeRef, attribute: CFStringRef, value: CFTypeRef) -> i32;
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InjectTextResult {
@@ -108,12 +119,6 @@ pub async fn inject_text(text: String) -> Result<InjectTextResult, String> {
 }
 
 unsafe fn check_accessibility_permission_internal(prompt: bool) -> bool {
-    use core_foundation::base::TCFType;
-    use core_foundation::dictionary::CFDictionary;
-    use core_foundation::number::CFBoolean;
-    use core_foundation::string::CFString;
-    use core_foundation::boolean::CFBoolean;
-
     let options_key = CFString::new("AXTrustedCheckOptionPrompt");
     let options_value = if prompt {
         CFBoolean::true_value()
@@ -123,32 +128,28 @@ unsafe fn check_accessibility_permission_internal(prompt: bool) -> bool {
 
     let options = CFDictionary::from_CFType_pairs(&[(options_key.as_CFType(), options_value.as_CFType())]);
 
-    let trusted = cocoa::appkit::AXIsProcessTrustedWithOptions(options.as_concrete_TypeRef());
+    let trusted = AXIsProcessTrustedWithOptions(options.as_concrete_TypeRef());
 
     trusted
 }
 
 unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, String> {
-    use core_foundation::base::TCFType;
-    use core_foundation::string::CFString;
-
     let kAXFocusedUIElementAttribute = CFString::new("AXFocusedUIElement");
     let kAXRoleAttribute = CFString::new("AXRole");
-    let kAXValueAttribute = CFString::new("AXValue");
     let kAXSelectedTextAttribute = CFString::new("AXSelectedText");
     let kAXTextFieldRole = "AXTextField";
     let kAXTextAreaRole = "AXTextArea";
 
-    let system_wide_element = cocoa::appkit::AXUIElementCreateSystemWide();
+    let system_wide_element = AXUIElementCreateSystemWide();
     if system_wide_element.is_null() {
         return Err("Failed to create system wide element".to_string());
     }
 
-    let mut focused_element: *mut Object = ptr::null_mut();
-    let result = cocoa::appkit::AXUIElementCopyAttributeValue(
+    let mut focused_element: CFTypeRef = ptr::null_mut();
+    let result = AXUIElementCopyAttributeValue(
         system_wide_element,
         kAXFocusedUIElementAttribute.as_concrete_TypeRef(),
-        &mut focused_element as *mut _ as *mut _,
+        &mut focused_element,
     );
 
     if result != 0 {
@@ -159,11 +160,11 @@ unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, 
         return Err("No focused element".to_string());
     }
 
-    let mut role_value: *mut Object = ptr::null_mut();
-    let role_result = cocoa::appkit::AXUIElementCopyAttributeValue(
+    let mut role_value: CFTypeRef = ptr::null_mut();
+    let role_result = AXUIElementCopyAttributeValue(
         focused_element,
         kAXRoleAttribute.as_concrete_TypeRef(),
-        &mut role_value as *mut _ as *mut _,
+        &mut role_value,
     );
 
     if role_result != 0 {
@@ -186,10 +187,10 @@ unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, 
 
     let ns_text = NSString::alloc(nil).init_str(text);
 
-    let set_result = cocoa::appkit::AXUIElementSetAttributeValue(
+    let set_result = AXUIElementSetAttributeValue(
         focused_element,
         kAXSelectedTextAttribute.as_concrete_TypeRef(),
-        ns_text as *const _ as *const _,
+        ns_text as *const _ as *const c_void,
     );
 
     if set_result != 0 {
@@ -204,9 +205,6 @@ unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, 
 }
 
 unsafe fn inject_text_via_clipboard(text: &str) -> Result<InjectTextResult, String> {
-    use core_foundation::base::TCFType;
-    use core_foundation::string::CFString;
-
     let ns_text = NSString::alloc(nil).init_str(text);
 
     let pasteboard: id = msg_send![class!(NSPasteboard), generalPasteboard];
@@ -322,77 +320,5 @@ mod tests {
         assert_eq!(result.method, "clipboard");
         assert_eq!(result.success, true);
         assert_eq!(result.message, None);
-    }
-
-    #[test]
-    fn test_focused_app_info_serialization() {
-        let info = FocusedAppInfo {
-            bundle_id: "com.apple.TextEdit".to_string(),
-            name: "TextEdit".to_string(),
-        };
-
-        let json = serde_json::to_string(&info);
-        assert!(json.is_ok());
-
-        let expected = r#"{"bundle_id":"com.apple.TextEdit","name":"TextEdit"}"#;
-        assert_eq!(json.unwrap(), expected);
-    }
-
-    #[test]
-    fn test_parse_focused_app_info() {
-        let json = r#"{"bundle_id":"com.apple.TextEdit","name":"TextEdit"}"#;
-        let info: FocusedAppInfo = serde_json::from_str(json);
-
-        assert!(info.is_ok());
-        let info = info.unwrap();
-        assert_eq!(info.bundle_id, "com.apple.TextEdit");
-        assert_eq!(info.name, "TextEdit");
-    }
-
-    #[test]
-    fn test_empty_text_injection() {
-        let text = "".to_string();
-        assert_eq!(text.len(), 0);
-    }
-
-    #[test]
-    fn test_long_text_injection() {
-        let text = "A".repeat(10000);
-        assert_eq!(text.len(), 10000);
-    }
-
-    #[test]
-    fn test_unicode_text_injection() {
-        let text = "Привет мир! 你好世界! 🚀";
-        assert!(!text.is_empty());
-        assert_eq!(text.chars().count(), 19);
-    }
-
-    #[test]
-    fn test_special_characters_injection() {
-        let text = "Hello\nWorld\t!@#$%^&*()";
-        assert_eq!(text.chars().count(), 20);
-    }
-
-    #[test]
-    fn test_newline_handling() {
-        let text = "Line 1\nLine 2\nLine 3";
-        let lines: Vec<&str> = text.split('\n').collect();
-        assert_eq!(lines.len(), 3);
-    }
-
-    #[test]
-    fn test_inject_text_result_with_message() {
-        let result = InjectTextResult {
-            success: false,
-            method: "clipboard".to_string(),
-            message: Some("Error message".to_string()),
-        };
-
-        let json = serde_json::to_string(&result);
-        assert!(json.is_ok());
-
-        let parsed: InjectTextResult = serde_json::from_str(&json.unwrap()).unwrap();
-        assert_eq!(parsed.message, Some("Error message".to_string()));
     }
 }

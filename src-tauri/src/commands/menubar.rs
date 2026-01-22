@@ -16,16 +16,16 @@ pub struct TrayMenuAction {
 
 #[tauri::command]
 pub async fn create_tray(app_handle: AppHandle) -> Result<(), String> {
-    let quit_i = MenuItem::with_id(app_handle.clone(), "quit", "Quit", true, None::<&str>)
+    let quit_i = MenuItem::with_id(&app_handle, "quit", "Quit", true, None::<&str>)
         .map_err(|e| format!("Failed to create quit menu item: {}", e))?;
     
-    let settings_i = MenuItem::with_id(app_handle.clone(), "settings", "Settings", true, None::<&str>)
+    let settings_i = MenuItem::with_id(&app_handle, "settings", "Settings", true, None::<&str>)
         .map_err(|e| format!("Failed to create settings menu item: {}", e))?;
     
-    let record_i = MenuItem::with_id(app_handle.clone(), "record", "Record", true, None::<&str>)
+    let record_i = MenuItem::with_id(&app_handle, "record", "Record", true, None::<&str>)
         .map_err(|e| format!("Failed to create record menu item: {}", e))?;
     
-    let menu = Menu::with_items(app_handle.clone(), &[&record_i, &settings_i, &quit_i])
+    let menu = Menu::with_items(&app_handle, &[&record_i, &settings_i, &quit_i])
         .map_err(|e| format!("Failed to create menu: {}", e))?;
     
     let app_handle_clone = app_handle.clone();
@@ -66,7 +66,7 @@ pub async fn create_tray(app_handle: AppHandle) -> Result<(), String> {
                 _ => {}
             }
         })
-        .build(app_handle)
+        .build(&app_handle)
         .map_err(|e| format!("Failed to create tray icon: {}", e))?;
     
     Ok(())
