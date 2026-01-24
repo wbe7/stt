@@ -37,6 +37,9 @@ export type TranscriptionResponse = TranscriptionSuccess | TranscriptionError
 export interface WhisperConfig {
   model: string
   language?: string
+  provider?: 'openrouter' | 'openai' | 'groq' | 'ollama'
+  apiKey?: string
+  customBaseUrl?: string
   maxRetries?: number
   retryDelay?: number
   maxFileSize?: number
@@ -46,6 +49,7 @@ export interface WhisperConfig {
 
 export const DEFAULT_WHISPER_CONFIG: WhisperConfig = {
   model: 'whisper-1',
+  provider: 'openrouter',
   maxRetries: 3,
   retryDelay: 1000,
   maxFileSize: 25 * 1024 * 1024,

@@ -49,3 +49,9 @@ export const DEFAULT_RECORDER_CONFIG: VoiceRecorderConfig = {
   channelCount: 1,
   bitDepth: 16,
 }
+
+export type SoundCue = 'start' | 'stop' | 'success' | 'error'
+
+export interface SoundPlayerConfig {
+  muteSounds: boolean
+}

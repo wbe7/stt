@@ -5,6 +5,7 @@ import type {
 
 export class VoiceRecorder {
   private audioContext: AudioContext | null = null
+  private analyser: AnalyserNode | null = null
   private mediaStream: MediaStream | null = null
   private mediaRecorder: MediaRecorder | null = null
   private audioChunks: Blob[] = []
@@ -58,10 +59,19 @@ export class VoiceRecorder {
         },
       })
 
-      this.mediaStream = stream
-      this.mediaRecorder = new MediaRecorder(stream)
-      this.audioChunks = []
-      this.startTime = Date.now()
+       this.mediaStream = stream
+
+       // Set up analyser for audio levels
+       if (this.audioContext) {
+         const source = this.audioContext.createMediaStreamSource(stream)
+         this.analyser = this.audioContext.createAnalyser()
+         this.analyser.fftSize = 256
+         source.connect(this.analyser)
+       }
+
+       this.mediaRecorder = new MediaRecorder(stream)
+       this.audioChunks = []
+       this.startTime = Date.now()
 
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -129,6 +139,17 @@ export class VoiceRecorder {
 
   getState(): RecordingState {
     return { ...this.state }
+  }
+
+  getAudioLevels(): number[] {
+    if (!this.analyser) return []
+
+    const bufferLength = this.analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+    this.analyser.getByteFrequencyData(dataArray)
+
+    // Take first 32 frequencies for visualization
+    return Array.from(dataArray.slice(0, 32)).map(v => v / 255)
   }
 
   on(event: string, handler: (...args: unknown[]) => void): void {

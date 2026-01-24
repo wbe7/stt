@@ -1,0 +1,596 @@
+{
+  "project": {
+    "name": "Wispr Flow Killer",
+    "description": "A superior, privacy-focused, and smarter alternative to Wispr Flow. Instant startup, invisible UI, context-aware voice dictation with hybrid architecture.",
+    "tech_stack": [
+      "React",
+      "Vite",
+      "Tauri",
+      "TypeScript",
+      "Rust",
+      "OpenRouter",
+      "Web Audio API"
+    ],
+    "test_command": "npm test"
+  },
+  "user_stories": [
+    {
+      "id": "T001",
+      "title": "Implement Audio Hardware Management",
+      "description": "Ensure the app can manage audio hardware like a native macOS app.",
+      "acceptance_criteria": [
+        "Microphone Selector: Dropdown in settings to choose input device",
+        "Hot-plugging: Auto-detect when devices are added/removed (e.g., AirPods connected)",
+        "Visual Feedback: Small level meter in settings to test the mic"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T002",
+      "title": "Implement System Tray (Menu Bar)",
+      "description": "Add macOS menu bar integration for quick access.",
+      "acceptance_criteria": [
+        "Icon in the macOS top bar",
+        "Menu items: \"Settings\", \"Check for Updates\", \"Quit\"",
+        "Ability to open Settings even if the main widget is hidden"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T003",
+      "title": "Implement Launch at Login",
+      "description": "Allow the app to start automatically when user logs in.",
+      "acceptance_criteria": [
+        "Integrate tauri-plugin-autostart",
+        "Add toggle in Settings: \"Start at login\""
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T004",
+      "title": "Fix Global Hotkey Registration",
+      "description": "Ensure global hotkeys work reliably across the app.",
+      "acceptance_criteria": [
+        "App.tsx: Implement useEffect to call registerHotkey on mount",
+        "Add conflict detection: If the hotkey is taken, warn the user"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T005",
+      "title": "Implement Permission Guard System",
+      "description": "Handle macOS permissions gracefully to prevent app failure.",
+      "acceptance_criteria": [
+        "Startup Check: On launch, verify Accessibility and Microphone permissions",
+        "Blocker UI: If permissions missing, show a friendly setup screen",
+        "Deep Links: Add buttons to open macOS System Settings directly",
+        "Polling: Auto-detect when permission is granted"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T006",
+      "title": "Restore & Connect VoiceRecorder",
+      "description": "Reconnect the voice recording functionality to the UI.",
+      "acceptance_criteria": [
+        "Re-create VoiceRecorder.tsx",
+        "Connect src/lib/audio/recorder.ts to global hotkey events",
+        "Verify pipeline: Stop Rec -> Get Audio -> API Call -> Text Injection"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T007",
+      "title": "Implement Compact Floating Capsule",
+      "description": "Transform the app from a window to an intelligent floating widget.",
+      "acceptance_criteria": [
+        "Config: width: ~400px, height: ~60px, transparent, alwaysOnTop, no-decorations",
+        "Position: Bottom-center (floating above the dock)",
+        "Behavior: Auto-hide when idle, Instant fade-in on hotkey press, \"Shake\" animation on error"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T008",
+      "title": "Implement Design System: Glass & Motion",
+      "description": "Create a beautiful, adaptive visual design with animations.",
+      "acceptance_criteria": [
+        "Visualizer Bar: Realtime audio waveform using Canvas or CSS bars",
+        "States & Transitions: Listening (Red/Warm pulse), Thinking (Blue/Cool shimmer), Success (Green flash/Checkmark -> Fade out)",
+        "Theme: Adaptive (System Dark/Light), utilizing backdrop-blur-xl"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T009",
+      "title": "Implement The Smart Hotkey",
+      "description": "Create perfect Hold vs Toggle interaction experience.",
+      "acceptance_criteria": [
+        "Interaction State Machine: Hold Mode, Toggle Mode, Cancel",
+        "Custom Hotkey Manager: Support single keys, allow remapping Record/Commit/Cancel"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T010",
+      "title": "Implement Audio Feedback (Sound UX)",
+      "description": "Add sound cues for non-visual feedback.",
+      "acceptance_criteria": [
+        "Sound Cues: Add start.mp3, stop.mp3, success.mp3, error.mp3",
+        "Add \"Mute Sounds\" toggle"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T011",
+      "title": "Implement Context Awareness",
+      "description": "Make the app adapt to where the user is typing.",
+      "acceptance_criteria": [
+        "Active App Detection: Detect focused app bundle ID",
+        "Dynamic System Prompt: Dev Mode, Chat Mode, Pro Mode"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T012",
+      "title": "Implement Post-Processing Voice Commands",
+      "description": "Add intelligence to voice commands for editing.",
+      "acceptance_criteria": [
+        "\"Magic Edit\": Detect commands at the end of recording (e.g., \"Make it shorter\")"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T013",
+      "title": "Implement Multi-Engine Support",
+      "description": "Provide options for different AI providers for every user type.",
+      "acceptance_criteria": [
+        "OpenRouter (Default): Best balance",
+        "Custom OpenAI-Compatible API: Any provider",
+        "Groq Integration: Extreme speed",
+        "Local LLM (Ollama): Privacy/Offline"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T014",
+      "title": "Implement Smart Injection & Undo Safety",
+      "description": "Make text injection flexible and safe.",
+      "acceptance_criteria": [
+        "Injection Method Selector: Simulation (Cmd+V) or Accessibility API",
+        "Smart Spacing: Auto-insert space before text",
+        "Paste Queue: Handle rapid-fire dictations"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T015",
+      "title": "Implement Distribution & Updates",
+      "description": "Make the app distributable and updatable.",
+      "acceptance_criteria": [
+        "GitHub Actions: Automate builds",
+        "Notarization: Sign app with Apple Developer ID",
+        "Auto-Updater: Configure Tauri updater"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T016",
+      "title": "Implement Localization (i18n)",
+      "description": "Support multiple languages in the UI.",
+      "acceptance_criteria": [
+        "UI Translation: English / Russian"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T017",
+      "title": "Implement Resilience",
+      "description": "Make the app robust against network and other issues.",
+      "acceptance_criteria": [
+        "Network Handling: Graceful timeouts",
+        "Error Reporting: Local log collection"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T018",
+      "title": "Configure Floating Window Properties",
+      "description": "Set up the basic properties for the compact floating capsule window.",
+      "acceptance_criteria": [
+        "Configure window width to ~400px, height to ~60px",
+        "Set window to transparent, always on top, no decorations"
+      ],
+      "dependencies": [
+        "T007"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T019",
+      "title": "Implement Bottom-Center Positioning",
+      "description": "Position the floating capsule at the bottom-center of the screen.",
+      "acceptance_criteria": [
+        "Position window floating above the dock in bottom-center"
+      ],
+      "dependencies": [
+        "T007"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T020",
+      "title": "Add Auto-Hide and Animation Behaviors",
+      "description": "Implement auto-hide when idle, instant fade-in, and shake animation on error.",
+      "acceptance_criteria": [
+        "Auto-hide after 5 seconds of inactivity",
+        "Fade-in within 200ms on hotkey press",
+        "Shake animation on error"
+      ],
+      "dependencies": [
+        "T007"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T021",
+      "title": "Create Audio Waveform Visualizer",
+      "description": "Implement the realtime audio waveform visualizer.",
+      "acceptance_criteria": [
+        "Use Canvas or CSS bars for waveform display",
+        "Waveform updates at 60fps"
+      ],
+      "dependencies": [
+        "T008"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T022",
+      "title": "Implement State Transition Animations",
+      "description": "Add animations for listening, thinking, and success states.",
+      "acceptance_criteria": [
+        "Listening: Red/Warm pulse",
+        "Thinking: Blue/Cool shimmer",
+        "Success: Green flash/Checkmark -> Fade out within 300ms"
+      ],
+      "dependencies": [
+        "T008"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T023",
+      "title": "Add Adaptive Theme Support",
+      "description": "Implement system dark/light theme adaptation with backdrop blur.",
+      "acceptance_criteria": [
+        "Adaptive theme based on system settings",
+        "Utilize backdrop-blur-xl"
+      ],
+      "dependencies": [
+        "T008"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T024",
+      "title": "Build Hotkey Interaction State Machine",
+      "description": "Implement the state machine for hold vs toggle hotkey interactions.",
+      "acceptance_criteria": [
+        "Support Hold Mode, Toggle Mode, Cancel states"
+      ],
+      "dependencies": [
+        "T009"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T025",
+      "title": "Add Custom Hotkey Remapping Interface",
+      "description": "Create interface to remap record, commit, and cancel hotkeys.",
+      "acceptance_criteria": [
+        "Support single keys",
+        "Allow remapping Record/Commit/Cancel"
+      ],
+      "dependencies": [
+        "T009"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T026",
+      "title": "Detect Active Application Bundle ID",
+      "description": "Implement detection of the focused application's bundle ID.",
+      "acceptance_criteria": [
+        "Detect bundle ID of active app"
+      ],
+      "dependencies": [
+        "T011"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T027",
+      "title": "Implement Dynamic System Prompts",
+      "description": "Add dynamic prompts based on application context.",
+      "acceptance_criteria": [
+        "Dev Mode for code editors (e.g., VS Code)",
+        "Chat Mode for messaging apps",
+        "Pro Mode for professional writing"
+      ],
+      "dependencies": [
+        "T011"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T028",
+      "title": "Add OpenRouter Integration",
+      "description": "Integrate OpenRouter as the default AI provider.",
+      "acceptance_criteria": [
+        "Best balance of quality and speed"
+      ],
+      "dependencies": [
+        "T013"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T029",
+      "title": "Add Custom OpenAI-Compatible API",
+      "description": "Support any OpenAI-compatible API provider.",
+      "acceptance_criteria": [
+        "Flexible API endpoint configuration"
+      ],
+      "dependencies": [
+        "T013"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T030",
+      "title": "Integrate Groq",
+      "description": "Add Groq integration for extreme speed.",
+      "acceptance_criteria": [
+        "Low-latency processing"
+      ],
+      "dependencies": [
+        "T013"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T031",
+      "title": "Add Local LLM Support",
+      "description": "Integrate Ollama for local LLM processing.",
+      "acceptance_criteria": [
+        "Privacy-focused offline processing"
+      ],
+      "dependencies": [
+        "T013"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T032",
+      "title": "Add Injection Method Selector",
+      "description": "Implement selector for simulation or accessibility API injection.",
+      "acceptance_criteria": [
+        "Choose between Cmd+V simulation or Accessibility API"
+      ],
+      "dependencies": [
+        "T014"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T033",
+      "title": "Implement Smart Spacing Logic",
+      "description": "Auto-insert space before injected text.",
+      "acceptance_criteria": [
+        "Detect and insert space when needed"
+      ],
+      "dependencies": [
+        "T014"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T034",
+      "title": "Create Paste Queue System",
+      "description": "Handle rapid-fire dictations with a queue.",
+      "acceptance_criteria": [
+        "Queue multiple injections and process sequentially"
+      ],
+      "dependencies": [
+        "T014"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T035",
+      "title": "Design and Implement Hybrid Local/Cloud Architecture",
+      "description": "Combine local and cloud processing for optimal performance.",
+      "acceptance_criteria": [
+        "Local processing for basic tasks",
+        "Cloud fallback for complex operations"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T036",
+      "title": "Implement Privacy Features",
+      "description": "Add data privacy and security measures.",
+      "acceptance_criteria": [
+        "Local data handling",
+        "Encryption for sensitive data"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T037",
+      "title": "Add User Onboarding and Tutorials",
+      "description": "Create onboarding flow for permissions and features.",
+      "acceptance_criteria": [
+        "Guide users through permission setup",
+        "Tutorial for key features"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T038",
+      "title": "Optimize App Performance and Startup Time",
+      "description": "Improve performance for instant startup.",
+      "acceptance_criteria": [
+        "Startup time under 2 seconds",
+        "Optimize resource usage"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T039",
+      "title": "Implement Accessibility Features",
+      "description": "Add screen reader support and keyboard navigation.",
+      "acceptance_criteria": [
+        "Screen reader compatibility",
+        "Full keyboard navigation"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T040",
+      "title": "Refine Audio Hardware Management Testability",
+      "description": "Make visual feedback measurable.",
+      "acceptance_criteria": [
+        "Level meter shows dB levels within 1dB accuracy"
+      ],
+      "dependencies": [
+        "T001"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T041",
+      "title": "Add Sound Playback Verification",
+      "description": "Verify sound cues play at correct volumes and timings.",
+      "acceptance_criteria": [
+        "Sounds play at specified volumes and timings"
+      ],
+      "dependencies": [
+        "T010"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T042",
+      "title": "Specify Magic Edit Detection Criteria",
+      "description": "Define detection accuracy for voice commands.",
+      "acceptance_criteria": [
+        "Detects at least 80% of common commands like 'make it shorter'"
+      ],
+      "dependencies": [
+        "T012"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T043",
+      "title": "Specify Network Timeout Durations",
+      "description": "Add specific timeout and retry logic.",
+      "acceptance_criteria": [
+        "Timeouts after 30 seconds with retry logic"
+      ],
+      "dependencies": [
+        "T017"
+      ],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T044",
+      "title": "Implement Core Dictation Pipeline",
+      "description": "Connect the complete dictation workflow from recording to text injection.",
+      "acceptance_criteria": [
+        "Connect recording → transcription → editing → injection in sequence"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    },
+    {
+      "id": "T045",
+      "title": "Add End-to-End Integration Testing",
+      "description": "Add tests to verify the complete user flow.",
+      "acceptance_criteria": [
+        "Verify the complete user flow from hotkey press to text injection"
+      ],
+      "dependencies": [],
+      "status": "completed",
+      "passes": true
+    }
+  ]
+}

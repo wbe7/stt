@@ -18,7 +18,7 @@ export async function transcribeAudio(
     validateAudioFormat(audioBlob)
     validateFileSize(audioBlob, config.maxFileSize || MAX_FILE_SIZE)
 
-    const client = new OpenRouterClient()
+    const client = new OpenRouterClient(config.provider, config.apiKey, config.customBaseUrl)
     const result = await retryWithBackoff(
       () => client.transcribe(audioBlob, config.model, options?.language),
       config.maxRetries || 3,

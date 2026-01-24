@@ -33,7 +33,7 @@ export type EditError = {
 
 export type EditResponseWrapper = EditSuccess | EditError
 
-export type EditMode = 'minimal' | 'medium' | 'aggressive'
+export type EditMode = 'minimal' | 'medium' | 'aggressive' | 'shorten' | 'dev' | 'chat' | 'pro'
 
 export type EditTone = 'casual' | 'formal' | 'preserve'
 
@@ -42,6 +42,9 @@ export interface EditConfig {
   mode: EditMode
   tone: EditTone
   preserveTechnicalTerms: boolean
+  provider?: 'openrouter' | 'openai' | 'groq' | 'ollama'
+  apiKey?: string
+  customBaseUrl?: string
   maxRetries?: number
   retryDelay?: number
 }
@@ -51,6 +54,7 @@ export const DEFAULT_EDIT_CONFIG: EditConfig = {
   mode: 'medium',
   tone: 'preserve',
   preserveTechnicalTerms: true,
+  provider: 'openrouter',
   maxRetries: 3,
   retryDelay: 1000,
 }

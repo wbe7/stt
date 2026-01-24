@@ -17,6 +17,7 @@ type RecordingInfo = {
   is_recording: boolean
   mode: string
   start_time: number | null
+  action: string
 }
 
 type HotkeyEvent = {
@@ -29,6 +30,9 @@ export interface UseGlobalHotkeyReturn {
   registerHotkey: (hotkey: string) => Promise<void>
   unregisterHotkey: (hotkey: string) => Promise<void>
   registerToggleHotkey: (hotkey: string) => Promise<void>
+  registerRecordHotkey: (hotkey: string, mode: string) => Promise<void>
+  registerCommitHotkey: (hotkey: string) => Promise<void>
+  registerCancelHotkey: (hotkey: string) => Promise<void>
   getRecordingState: () => Promise<RecordingInfo>
   lastEvent: HotkeyEvent | null
   recordingState: RecordingInfo | null
@@ -116,6 +120,39 @@ export function useGlobalHotkey(): UseGlobalHotkeyReturn {
     }
   }, [])
 
+  const registerRecordHotkey = useCallback(async (hotkey: string, mode: string) => {
+    try {
+      setError(null)
+      await invoke('register_record_hotkey', { hotkey, mode })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      setError(`Failed to register record hotkey: ${errorMessage}`)
+      throw err
+    }
+  }, [])
+
+  const registerCommitHotkey = useCallback(async (hotkey: string) => {
+    try {
+      setError(null)
+      await invoke('register_commit_hotkey', { hotkey })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      setError(`Failed to register commit hotkey: ${errorMessage}`)
+      throw err
+    }
+  }, [])
+
+  const registerCancelHotkey = useCallback(async (hotkey: string) => {
+    try {
+      setError(null)
+      await invoke('register_cancel_hotkey', { hotkey })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      setError(`Failed to register cancel hotkey: ${errorMessage}`)
+      throw err
+    }
+  }, [])
+
   const getRecordingState = useCallback(async (): Promise<RecordingInfo> => {
     try {
       setError(null)
@@ -133,6 +170,9 @@ export function useGlobalHotkey(): UseGlobalHotkeyReturn {
     registerHotkey,
     unregisterHotkey,
     registerToggleHotkey,
+    registerRecordHotkey,
+    registerCommitHotkey,
+    registerCancelHotkey,
     getRecordingState,
     lastEvent,
     recordingState,

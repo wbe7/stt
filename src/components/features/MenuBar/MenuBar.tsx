@@ -1,5 +1,6 @@
-import { useState } from 'react'
+ import { useState, useEffect } from 'react'
 import type { MenuBarStatus } from '@/types/menubar'
+import { useGlobalHotkey } from '@/hooks/useGlobalHotkey'
 
 interface Props {
   status?: MenuBarStatus
@@ -7,6 +8,23 @@ interface Props {
 
 export function MenuBar({ status = 'idle' }: Props) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
+  const { lastEvent, error } = useGlobalHotkey()
+
+  // Show on hotkey press and reset timer
+  useEffect(() => {
+    if (lastEvent && lastEvent.state === 'pressed') {
+      setIsVisible(true)
+    }
+  }, [lastEvent])
+
+  // Auto-hide after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(false)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [isVisible])
 
   return (
     <div className="relative">
@@ -14,7 +32,9 @@ export function MenuBar({ status = 'idle' }: Props) {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Menu"
-        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-opacity duration-200 ${
+          isVisible ? 'opacity-100' : 'opacity-0'
+        } ${error ? 'animate-shake' : ''}`}
       >
         <svg
           className="w-6 h-6"

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { HistoryEntry, RecordingStatus } from '@/types/history'
+import { secureStorage } from '@/lib/storage/secure-storage'
 
 interface HistoryState {
   entries: HistoryEntry[]
@@ -31,6 +32,7 @@ export const useHistoryStore = create<HistoryState>()(
     }),
     {
       name: 'stt-history',
+      storage: secureStorage,
     },
   ),
 )

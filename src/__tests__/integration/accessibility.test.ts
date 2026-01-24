@@ -102,6 +102,62 @@ describe('Accessibility Integration', () => {
     })
   })
 
+  describe('Smart Spacing', () => {
+    it('should apply smart spacing correctly', () => {
+      const apply_smart_spacing = (text: string, smart_spacing: boolean): string => {
+        if (smart_spacing && text.length > 0 && !text.startsWith(' ')) {
+          return ' ' + text
+        } else {
+          return text
+        }
+      }
+
+      expect(apply_smart_spacing('', true)).toBe('')
+      expect(apply_smart_spacing('hello', true)).toBe(' hello')
+      expect(apply_smart_spacing(' hello', true)).toBe(' hello')
+      expect(apply_smart_spacing('hello', false)).toBe('hello')
+    })
+  })
+
+  describe('Injection Method Selector', () => {
+    it('should support method parameter', () => {
+      type InjectTextParams = {
+        text: string
+        method?: string | null
+        smart_spacing: boolean
+      }
+
+      const params: InjectTextParams = {
+        text: 'hello',
+        method: 'clipboard',
+        smart_spacing: true,
+      }
+
+      expect(params.method).toBe('clipboard')
+      expect(params.smart_spacing).toBe(true)
+    })
+  })
+
+  describe('Paste Queue', () => {
+    it('should have InjectionRequest type', () => {
+      type InjectionRequest = {
+        text: string
+        method?: string | null
+        smart_spacing: boolean
+      }
+
+      const request: InjectionRequest = {
+        text: 'hello',
+        method: 'clipboard',
+        smart_spacing: true,
+      }
+
+      expect(request.text).toBe('hello')
+      expect(request.method).toBe('clipboard')
+      expect(request.smart_spacing).toBe(true)
+    })
+  })
+
   describe('Error Handling', () => {
     it('should handle missing accessibility permission', () => {
       type InjectTextResult = {

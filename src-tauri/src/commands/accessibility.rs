@@ -1,6 +1,6 @@
 use cocoa::appkit::{NSApplication, NSRunningApplication};
 use cocoa::base::{id, nil};
-use cocoa::foundation::{NSString, NSPoint};
+use cocoa::foundation::{NSString, NSPoint, NSRange};
 use core_foundation::base::{TCFType, CFTypeRef};
 use core_foundation::string::{CFString, CFStringRef};
 use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
@@ -12,6 +12,9 @@ use objc::{msg_send, sel, sel_impl, class};
 use serde::{Deserialize, Serialize};
 use std::ptr;
 use std::ffi::c_void;
+use lazy_static::lazy_static;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[link(name = "ApplicationServices", kind = "framework")]
 extern "C" {
@@ -32,6 +35,18 @@ pub struct InjectTextResult {
 pub struct FocusedAppInfo {
     pub bundle_id: String,
     pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InjectionRequest {
+    pub text: String,
+    pub method: Option<String>,
+    pub smart_spacing: bool,
+}
+
+lazy_static! {
+    static ref INJECTION_QUEUE: Arc<Mutex<Vec<InjectionRequest>>> = Arc::new(Mutex::new(Vec::new()));
+    static ref IS_PROCESSING: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
 }
 
 #[tauri::command]
@@ -83,8 +98,7 @@ pub async fn get_focused_app() -> Result<FocusedAppInfo, String> {
     }
 }
 
-#[tauri::command]
-pub async fn inject_text(text: String) -> Result<InjectTextResult, String> {
+async fn inject_text_logic(text: String, method: Option<String>, smart_spacing: bool) -> Result<InjectTextResult, String> {
     if text.is_empty() {
         return Ok(InjectTextResult {
             success: true,
@@ -93,17 +107,29 @@ pub async fn inject_text(text: String) -> Result<InjectTextResult, String> {
         });
     }
 
+
+
     #[cfg(target_os = "macos")]
     {
         unsafe {
-            let permission_granted = check_accessibility_permission_internal(false);
-            if !permission_granted {
-                return inject_text_via_clipboard(&text);
-            }
-
-            match inject_text_via_accessibility(&text) {
-                Ok(result) => Ok(result),
-                Err(_) => inject_text_via_clipboard(&text),
+            if let Some(method) = method {
+                if method == "clipboard" {
+                    return inject_text_via_clipboard(&text);
+                } else {
+                match inject_text_via_accessibility(&text, smart_spacing) {
+                    Ok(result) => Ok(result),
+                    Err(_) => inject_text_via_clipboard(&text),
+                }
+                }
+            } else {
+                let permission_granted = check_accessibility_permission_internal(false);
+                if !permission_granted {
+                    return inject_text_via_clipboard(&text);
+                }
+                match inject_text_via_accessibility(&text, smart_spacing) {
+                    Ok(result) => Ok(result),
+                    Err(_) => inject_text_via_clipboard(&text),
+                }
             }
         }
     }
@@ -115,6 +141,44 @@ pub async fn inject_text(text: String) -> Result<InjectTextResult, String> {
             method: "unsupported_platform".to_string(),
             message: Some("Platform not supported".to_string()),
         })
+    }
+}
+
+#[tauri::command]
+pub async fn inject_text(text: String, method: Option<String>, smart_spacing: bool) -> Result<InjectTextResult, String> {
+    inject_text_logic(text, method, smart_spacing).await
+}
+
+#[tauri::command]
+pub async fn queue_inject_text(request: InjectionRequest) -> Result<(), String> {
+    let mut queue = INJECTION_QUEUE.lock().await;
+    queue.push(request);
+    drop(queue);
+
+    let mut is_processing = IS_PROCESSING.lock().await;
+    if !*is_processing {
+        *is_processing = true;
+        drop(is_processing);
+        tokio::spawn(async move {
+            process_queue().await;
+        });
+    }
+    Ok(())
+}
+
+async fn process_queue() {
+    loop {
+        let request = {
+            let mut queue = INJECTION_QUEUE.lock().await;
+            if queue.is_empty() {
+                let mut is_processing = IS_PROCESSING.lock().await;
+                *is_processing = false;
+                return;
+            }
+            queue.remove(0)
+        };
+
+        let _ = inject_text_logic(request.text, request.method, request.smart_spacing).await;
     }
 }
 
@@ -133,7 +197,7 @@ unsafe fn check_accessibility_permission_internal(prompt: bool) -> bool {
     trusted
 }
 
-unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, String> {
+unsafe fn inject_text_via_accessibility(text: &str, smart_spacing: bool) -> Result<InjectTextResult, String> {
     let kAXFocusedUIElementAttribute = CFString::new("AXFocusedUIElement");
     let kAXRoleAttribute = CFString::new("AXRole");
     let kAXSelectedTextAttribute = CFString::new("AXSelectedText");
@@ -185,7 +249,47 @@ unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, 
         return Err("Focused element is not a text field".to_string());
     }
 
-    let ns_text = NSString::alloc(nil).init_str(text);
+    let mut injected_text = text.to_string();
+
+    if smart_spacing {
+        let kAXValueAttribute = CFString::new("AXValue");
+        let kAXSelectedTextRangeAttribute = CFString::new("AXSelectedTextRange");
+
+        let mut value_ref: CFTypeRef = ptr::null_mut();
+        let value_result = AXUIElementCopyAttributeValue(
+            focused_element,
+            kAXValueAttribute.as_concrete_TypeRef(),
+            &mut value_ref,
+        );
+
+        if value_result == 0 && !value_ref.is_null() {
+            let value_cf_string: id = value_ref as id;
+            let value_utf8: *const i8 = msg_send![value_cf_string, UTF8String];
+            let full_text = std::ffi::CStr::from_ptr(value_utf8).to_string_lossy().into_owned();
+
+            let mut range_ref: CFTypeRef = ptr::null_mut();
+            let range_result = AXUIElementCopyAttributeValue(
+                focused_element,
+                kAXSelectedTextRangeAttribute.as_concrete_TypeRef(),
+                &mut range_ref,
+            );
+
+            if range_result == 0 && !range_ref.is_null() {
+                let range: NSRange = unsafe { *(range_ref as *const NSRange) };
+                let location = range.location as usize;
+                let previous_char = if location > 0 {
+                    full_text.chars().nth(location - 1)
+                } else {
+                    None
+                };
+                if should_prepend_space(previous_char, &injected_text) {
+                    injected_text = format!(" {}", injected_text);
+                }
+            }
+        }
+    }
+
+    let ns_text = NSString::alloc(nil).init_str(&injected_text);
 
     let set_result = AXUIElementSetAttributeValue(
         focused_element,
@@ -202,6 +306,28 @@ unsafe fn inject_text_via_accessibility(text: &str) -> Result<InjectTextResult, 
         method: "accessibility".to_string(),
         message: None,
     })
+}
+
+fn apply_smart_spacing(text: &str, smart_spacing: bool) -> String {
+    if smart_spacing && !text.is_empty() && !text.starts_with(' ') {
+        format!(" {}", text)
+    } else {
+        text.to_string()
+    }
+}
+
+fn should_prepend_space(previous_char: Option<char>, text: &str) -> bool {
+    if text.is_empty() {
+        return false;
+    }
+    if text.starts_with(' ') {
+        return false;
+    }
+    if let Some(ch) = previous_char {
+        !ch.is_whitespace()
+    } else {
+        false
+    }
 }
 
 unsafe fn inject_text_via_clipboard(text: &str) -> Result<InjectTextResult, String> {
@@ -320,5 +446,46 @@ mod tests {
         assert_eq!(result.method, "clipboard");
         assert_eq!(result.success, true);
         assert_eq!(result.message, None);
+    }
+
+    #[test]
+    fn test_focused_app_info_serialization() {
+        let info = FocusedAppInfo {
+            bundle_id: "com.apple.TextEdit".to_string(),
+            name: "TextEdit".to_string(),
+        };
+
+        let json = serde_json::to_string(&info);
+        assert!(json.is_ok());
+
+        let expected = r#"{"bundle_id":"com.apple.TextEdit","name":"TextEdit"}"#;
+        assert_eq!(json.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_parse_focused_app_info() {
+        let json = r#"{"bundle_id":"com.example.app","name":"Example App"}"#;
+        let info: FocusedAppInfo = serde_json::from_str(json).unwrap();
+
+        assert_eq!(info.bundle_id, "com.example.app");
+        assert_eq!(info.name, "Example App");
+    }
+
+    #[test]
+    fn test_apply_smart_spacing() {
+        assert_eq!(apply_smart_spacing("", true), "");
+        assert_eq!(apply_smart_spacing("hello", true), " hello");
+        assert_eq!(apply_smart_spacing(" hello", true), " hello");
+        assert_eq!(apply_smart_spacing("hello", false), "hello");
+    }
+
+    #[test]
+    fn test_should_prepend_space() {
+        assert_eq!(should_prepend_space(Some('a'), "hello"), true);
+        assert_eq!(should_prepend_space(Some(' '), "hello"), false);
+        assert_eq!(should_prepend_space(None, "hello"), false);
+        assert_eq!(should_prepend_space(Some('a'), " hello"), false);
+        assert_eq!(should_prepend_space(Some('a'), ""), false);
+        assert_eq!(should_prepend_space(Some('\n'), "hello"), false);
     }
 }

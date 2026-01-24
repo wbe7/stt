@@ -99,6 +99,31 @@ describe('transcribeAudio', () => {
       }
     })
 
+    it('should retry on timeout (AbortError)', async () => {
+      let attempts = 0
+      vi.mocked(fetch).mockImplementation(async () => {
+        attempts++
+        if (attempts < 3) {
+          const abortError = new Error('The operation was aborted')
+          ;(abortError as any).name = 'AbortError'
+          throw abortError
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ text: 'retry after timeout success', language: 'en' }),
+        } as Response)
+      })
+
+      const wavBlob = new Blob(['test'], { type: 'audio/wav' })
+      const result = await transcribeAudio(wavBlob)
+
+      expect(attempts).toBe(3)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.text).toBe('retry after timeout success')
+      }
+    })
+
     it('should fail after max retries', async () => {
       vi.mocked(fetch).mockRejectedValue(new Error('Persistent error'))
 
@@ -210,6 +235,30 @@ describe('transcribeAudio', () => {
       if (!result.success) {
         expect(result.error).toContain('Internal server error')
       }
+    })
+
+    it('should pass customBaseUrl to client when provided', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({ text: 'test transcription', language: 'en' }),
+      }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as unknown as Response)
+
+      const wavBlob = new Blob(['test'], { type: 'audio/wav' })
+      const customUrl = 'https://custom.openai.com/v1'
+
+      // Since we can't easily mock the constructor, we'll test that the URL used in fetch contains the custom base
+      await transcribeAudio(wavBlob, {
+        provider: 'openai',
+        apiKey: 'test-key',
+        customBaseUrl: customUrl,
+      })
+
+      // Check that fetch was called with the custom URL
+      expect(fetch).toHaveBeenCalledWith(
+        `${customUrl}/audio/transcriptions`,
+        expect.any(Object)
+      )
     })
   })
 })

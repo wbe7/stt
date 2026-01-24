@@ -31,3 +31,4 @@ export const DEFAULT_SETTINGS: Settings = {
 }
 
 export * from './hotkey'
+export * from './context'

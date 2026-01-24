@@ -4,10 +4,10 @@ import { resolve } from 'node:path'
 
 export default defineConfig({
   plugins: [react()],
-  test: {
-    environment: 'node',
-    globals: true,
-    setupFiles: './src/__tests__/setup.ts',
+     test: {
+       environment: 'jsdom',
+     globals: true,
+     setupFiles: './src/__tests__/setup.ts',
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -124,6 +124,32 @@ describe('editText', () => {
       }
     })
 
+    it('should retry on timeout (AbortError)', async () => {
+      let attempts = 0
+      vi.mocked(fetch).mockImplementation(async () => {
+        attempts++
+        if (attempts < 3) {
+          const abortError = new Error('The operation was aborted')
+          ;(abortError as any).name = 'AbortError'
+          throw abortError
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            choices: [{ message: { content: 'retry after timeout success' } }],
+          }),
+        } as Response)
+      })
+
+      const result = await editText('test text')
+
+      expect(attempts).toBe(3)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.editedText).toBe('retry after timeout success')
+      }
+    })
+
     it('should fail after max retries', async () => {
       vi.mocked(fetch).mockRejectedValue(new Error('Persistent error'))
 
@@ -163,6 +189,73 @@ describe('editText', () => {
       const result = await editText('test text', { mode: 'aggressive' })
 
       expect(result.success).toBe(true)
+    })
+
+    it('should use dev mode for code editors', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'Dev mode edit' } }],
+        }),
+      }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as unknown as Response)
+
+      const result = await editText('test text', { mode: 'dev' })
+
+      expect(result.success).toBe(true)
+    })
+
+    it('should use chat mode for messaging apps', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'Chat mode edit' } }],
+        }),
+      }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as unknown as Response)
+
+      const result = await editText('test text', { mode: 'chat' })
+
+      expect(result.success).toBe(true)
+    })
+
+    it('should use pro mode for professional writing', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'Pro mode edit' } }],
+        }),
+      }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as unknown as Response)
+
+      const result = await editText('test text', { mode: 'pro' })
+
+      expect(result.success).toBe(true)
+    })
+
+    it('should pass customBaseUrl to client when provided', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'edited text' } }],
+        }),
+      }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as unknown as Response)
+
+      const customUrl = 'https://custom.openai.com/v1'
+
+      // Since we can't easily mock the constructor, we'll test that the URL used in fetch contains the custom base
+      await editText('test text', {
+        provider: 'openai',
+        apiKey: 'test-key',
+        customBaseUrl: customUrl,
+      })
+
+      // Check that fetch was called with the custom URL
+      expect(fetch).toHaveBeenCalledWith(
+        `${customUrl}/chat/completions`,
+        expect.any(Object)
+      )
     })
   })
 })

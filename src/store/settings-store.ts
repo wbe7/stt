@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Settings, DEFAULT_SETTINGS } from '@/types/settings'
+import { secureStorage } from '@/lib/storage/secure-storage'
 
 interface SettingsState {
   settings: Settings
@@ -25,6 +26,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'stt-settings',
+      storage: secureStorage,
     }
   )
 )

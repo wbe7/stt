@@ -25,12 +25,11 @@ export function HotkeyEditor({ label, value, onChange }: HotkeyEditorProps): Rea
     if (e.shiftKey) modifiers.push('Shift')
     if (e.altKey) modifiers.push('Alt')
 
-    if (modifiers.length === 0) return
-
     const key = e.key
     if (key === 'Shift' || key === 'Control' || key === 'Alt' || key === 'Meta') return
 
-    const hotkey = [...modifiers, key].join('+')
+    // Allow single keys or combinations with modifiers
+    const hotkey = modifiers.length > 0 ? [...modifiers, key].join('+') : key
     onChange(hotkey)
     setIsRecording(false)
   }

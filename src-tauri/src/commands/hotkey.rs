@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+use crate::state_machine::{StateMachine, RecordingMode, Event, Action};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HotkeyEvent {
@@ -15,39 +16,13 @@ pub struct RecordingInfo {
     pub is_recording: bool,
     pub mode: String, // "hold" or "toggle"
     pub start_time: Option<u64>,
+    pub action: String, // "start" | "commit" | "cancel"
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RecordingMode {
-    Hold,
-    Toggle,
-}
-
-impl RecordingMode {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            RecordingMode::Hold => "hold",
-            RecordingMode::Toggle => "toggle",
-        }
-    }
-}
-
-impl Default for RecordingMode {
-    fn default() -> Self {
-        RecordingMode::Hold
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct RecordingState {
-    pub is_recording: bool,
-    pub mode: RecordingMode,
-    pub start_time: Option<u64>,
-}
 
 #[derive(Debug)]
 pub struct HotkeyState {
-    pub recording_state: Mutex<RecordingState>,
+    pub recording_state: Mutex<StateMachine>,
 }
 
 impl HotkeyState {
@@ -59,7 +34,7 @@ impl HotkeyState {
 impl Default for HotkeyState {
     fn default() -> Self {
         HotkeyState {
-            recording_state: Mutex::new(RecordingState::default()),
+            recording_state: Mutex::new(StateMachine::new()),
         }
     }
 }
@@ -129,32 +104,30 @@ pub async fn register_toggle_hotkey(
             };
 
             if event.state == ShortcutState::Pressed {
-                let state = app.state::<HotkeyState>();
-                let mut recording_state = state.recording_state.lock().unwrap();
+                let mut sm = app.state::<HotkeyState>().recording_state.lock().unwrap();
+                sm.set_mode(RecordingMode::Toggle);
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64;
+                let action = sm.transition(Event::Press, timestamp);
 
-                if recording_state.is_recording && recording_state.mode == RecordingMode::Toggle {
-                    recording_state.is_recording = false;
-                    recording_state.start_time = None;
-                    recording_state.mode = RecordingMode::Hold;
-                } else {
-                    recording_state.is_recording = true;
-                    recording_state.mode = RecordingMode::Toggle;
-                    recording_state.start_time = Some(
-                        std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap()
-                            .as_millis() as u64,
-                    );
+                if action != Action::None {
+                    let recording_info = RecordingInfo {
+                        is_recording: sm.is_recording,
+                        mode: sm.mode.as_str().to_string(),
+                        start_time: sm.start_time,
+                        action: match action {
+                            Action::Start => "start".to_string(),
+                            Action::Commit => "commit".to_string(),
+                            Action::Cancel => "cancel".to_string(),
+                            Action::None => "".to_string(),
+                        },
+                    };
+
+                    app.emit("recording-state-changed", recording_info)
+                        .unwrap_or_else(|e| eprintln!("Failed to emit recording state: {}", e));
                 }
-
-                let recording_info = RecordingInfo {
-                    is_recording: recording_state.is_recording,
-                    mode: recording_state.mode.as_str().to_string(),
-                    start_time: recording_state.start_time,
-                };
-
-                app.emit("recording-state-changed", recording_info)
-                    .unwrap_or_else(|e| eprintln!("Failed to emit recording state: {}", e));
             }
 
             let hotkey_event = HotkeyEvent {
@@ -193,13 +166,221 @@ pub async fn unregister_hotkey(app_handle: AppHandle, hotkey: String) -> Result<
 }
 
 #[tauri::command]
+pub async fn register_record_hotkey(
+    app_handle: AppHandle,
+    state: State<'_, HotkeyState>,
+    hotkey: String,
+    mode: String,
+) -> Result<(), String> {
+    let recording_mode = if mode == "hold" {
+        RecordingMode::Hold
+    } else if mode == "toggle" {
+        RecordingMode::Toggle
+    } else {
+        return Err(format!("Invalid mode: {}", mode));
+    };
+
+    let shortcut = parse_hotkey(&hotkey)
+        .map_err(|e| format!("Failed to parse hotkey: {}", e))?;
+
+    let hotkey_clone = hotkey.clone();
+    let app_handle_clone = app_handle.clone();
+
+    app_handle
+        .global_shortcut()
+        .on_shortcut(shortcut, move |app, _shortcut, event| {
+            let mut sm = app.state::<HotkeyState>().recording_state.lock().unwrap();
+            sm.set_mode(recording_mode.clone());
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64;
+            let event_type = if event.state == ShortcutState::Pressed { Event::Press } else { Event::Release };
+            let action = sm.transition(event_type, timestamp);
+
+            if action != Action::None {
+                let recording_info = RecordingInfo {
+                    is_recording: sm.is_recording,
+                    mode: sm.mode.as_str().to_string(),
+                    start_time: sm.start_time,
+                    action: match action {
+                        Action::Start => "start".to_string(),
+                        Action::Commit => "commit".to_string(),
+                        Action::Cancel => "cancel".to_string(),
+                        Action::None => "".to_string(),
+                    },
+                };
+
+                app.emit("recording-state-changed", recording_info)
+                    .unwrap_or_else(|e| eprintln!("Failed to emit recording state: {}", e));
+            }
+
+            let state_str = if event.state == ShortcutState::Pressed {
+                "pressed"
+            } else {
+                "released"
+            };
+
+            let hotkey_event = HotkeyEvent {
+                hotkey: hotkey_clone.clone(),
+                state: state_str.to_string(),
+                timestamp: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64,
+            };
+
+            app.emit("hotkey-event", hotkey_event)
+                .unwrap_or_else(|e| eprintln!("Failed to emit hotkey event: {}", e));
+        })
+        .map_err(|e| format!("Failed to register hotkey handler: {}", e))?;
+
+    app_handle
+        .global_shortcut()
+        .register(shortcut)
+        .map_err(|e| format!("Failed to register hotkey: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn register_commit_hotkey(
+    app_handle: AppHandle,
+    state: State<'_, HotkeyState>,
+    hotkey: String,
+) -> Result<(), String> {
+    let shortcut = parse_hotkey(&hotkey)
+        .map_err(|e| format!("Failed to parse hotkey: {}", e))?;
+
+    let hotkey_clone = hotkey.clone();
+
+    app_handle
+        .global_shortcut()
+        .on_shortcut(shortcut, move |app, _shortcut, event| {
+            if event.state == ShortcutState::Pressed {
+                let mut recording_state = app.state::<HotkeyState>().recording_state.lock().unwrap();
+
+                if recording_state.is_recording {
+                    recording_state.is_recording = false;
+                    recording_state.start_time = None;
+
+                    let recording_info = RecordingInfo {
+                        is_recording: recording_state.is_recording,
+                        mode: recording_state.mode.as_str().to_string(),
+                        start_time: recording_state.start_time,
+                        action: "commit".to_string(),
+                    };
+
+                    app.emit("recording-state-changed", recording_info)
+                        .unwrap_or_else(|e| eprintln!("Failed to emit recording state: {}", e));
+                }
+            }
+
+            let state_str = if event.state == ShortcutState::Pressed {
+                "pressed"
+            } else {
+                "released"
+            };
+
+            let hotkey_event = HotkeyEvent {
+                hotkey: hotkey_clone.clone(),
+                state: state_str.to_string(),
+                timestamp: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64,
+            };
+
+            app.emit("hotkey-event", hotkey_event)
+                .unwrap_or_else(|e| eprintln!("Failed to emit hotkey event: {}", e));
+        })
+        .map_err(|e| format!("Failed to register hotkey handler: {}", e))?;
+
+    app_handle
+        .global_shortcut()
+        .register(shortcut)
+        .map_err(|e| format!("Failed to register hotkey: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn register_cancel_hotkey(
+    app_handle: AppHandle,
+    state: State<'_, HotkeyState>,
+    hotkey: String,
+) -> Result<(), String> {
+    let shortcut = parse_hotkey(&hotkey)
+        .map_err(|e| format!("Failed to parse hotkey: {}", e))?;
+
+    let hotkey_clone = hotkey.clone();
+
+    app_handle
+        .global_shortcut()
+        .on_shortcut(shortcut, move |app, _shortcut, event| {
+            if event.state == ShortcutState::Pressed {
+                let mut sm = app.state::<HotkeyState>().recording_state.lock().unwrap();
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64;
+                let action = sm.transition(Event::Cancel, timestamp);
+
+                if action != Action::None {
+                    let recording_info = RecordingInfo {
+                        is_recording: sm.is_recording,
+                        mode: sm.mode.as_str().to_string(),
+                        start_time: sm.start_time,
+                        action: match action {
+                            Action::Start => "start".to_string(),
+                            Action::Commit => "commit".to_string(),
+                            Action::Cancel => "cancel".to_string(),
+                            Action::None => "".to_string(),
+                        },
+                    };
+
+                    app.emit("recording-state-changed", recording_info)
+                        .unwrap_or_else(|e| eprintln!("Failed to emit recording state: {}", e));
+                }
+            }
+
+            let state_str = if event.state == ShortcutState::Pressed {
+                "pressed"
+            } else {
+                "released"
+            };
+
+            let hotkey_event = HotkeyEvent {
+                hotkey: hotkey_clone.clone(),
+                state: state_str.to_string(),
+                timestamp: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64,
+            };
+
+            app.emit("hotkey-event", hotkey_event)
+                .unwrap_or_else(|e| eprintln!("Failed to emit hotkey event: {}", e));
+        })
+        .map_err(|e| format!("Failed to register hotkey handler: {}", e))?;
+
+    app_handle
+        .global_shortcut()
+        .register(shortcut)
+        .map_err(|e| format!("Failed to register hotkey: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn get_recording_state(state: State<'_, HotkeyState>) -> Result<RecordingInfo, String> {
-    let recording_state = state.recording_state.lock().unwrap();
+    let sm = state.recording_state.lock().unwrap();
 
     Ok(RecordingInfo {
-        is_recording: recording_state.is_recording,
-        mode: recording_state.mode.as_str().to_string(),
-        start_time: recording_state.start_time,
+        is_recording: sm.is_recording,
+        mode: sm.mode.as_str().to_string(),
+        start_time: sm.start_time,
+        action: "".to_string(), // no action for get
     })
 }
 

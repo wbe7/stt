@@ -11,11 +11,12 @@ export function ModelSelector({ label, value, onChange }: ModelSelectorProps): R
   return (
     <div className="model-selector">
       <label className="model-label">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="model-select"
-      >
+       <select
+         value={value}
+         onChange={(e) => onChange(e.target.value)}
+         className="model-select"
+         aria-label={label}
+       >
         {AVAILABLE_MODELS.map((model) => (
           <option key={model.id} value={model.id}>
             {model.name} - {model.description}

@@ -29,7 +29,7 @@ export async function editText(
       preserveTechnicalTerms: config.preserveTechnicalTerms,
     })
 
-    const client = new OpenRouterClient()
+    const client = new OpenRouterClient(config.provider, config.apiKey, config.customBaseUrl)
     const editedText = await retryWithBackoff(
       () => client.chat(config.model, prompt),
       config.maxRetries || 3,
@@ -108,10 +108,18 @@ Return ONLY the edited text, nothing else.`
 
 function getModeInstructions(mode: EditConfig['mode']): string {
   switch (mode) {
+    case 'dev':
+      return 'Dev Mode: Optimized for code editors. Preserve technical terms, maintain concise communication style, minimal punctuation changes, focus on clarity for technical documentation and code comments.'
+    case 'chat':
+      return 'Chat Mode: Optimized for messaging apps. Keep casual tone, preserve emojis and informal language, add minimal punctuation for readability in conversations.'
+    case 'pro':
+      return 'Pro Mode: Optimized for professional writing. Use formal tone, ensure proper grammar and punctuation, polish language for business communication, emails, and documentation.'
     case 'minimal':
       return 'Make minimal changes. Only remove obvious filler words and add basic punctuation.'
     case 'aggressive':
       return 'Make aggressive changes. Remove all filler words, fix all stuttering, add full punctuation, and rephrase for clarity while preserving meaning.'
+    case 'shorten':
+      return 'Make the text significantly shorter while preserving the core meaning. Remove redundant information and condense sentences.'
     case 'medium':
     default:
       return 'Make moderate changes. Remove filler words, fix stuttering, add appropriate punctuation, and improve readability.'

@@ -1,18 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { OpenRouterClient } from '@/lib/api/openrouter/client'
 
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn(),
+}))
+
 describe('OpenRouterClient', () => {
   let client: OpenRouterClient
 
   beforeEach(() => {
-    client = new OpenRouterClient('test-api-key')
+    client = new OpenRouterClient('openrouter', 'test-api-key')
     vi.clearAllMocks()
     global.fetch = vi.fn()
   })
 
   describe('initialization', () => {
     it('should initialize with API key', () => {
-      const testClient = new OpenRouterClient('test-key')
+      const testClient = new OpenRouterClient('openrouter', 'test-key')
       expect(testClient).toBeDefined()
     })
 
@@ -107,6 +111,31 @@ describe('OpenRouterClient', () => {
         client.transcribe(new Blob(), 'whisper-1')
       ).rejects.toThrow('Rate limit exceeded')
     })
+
+    it('should handle timeout gracefully', async () => {
+      // Mock fetch to reject with AbortError (simulating timeout)
+      const abortError = new Error('The operation was aborted')
+      ;(abortError as any).name = 'AbortError'
+      vi.mocked(fetch).mockRejectedValueOnce(abortError)
+
+      await expect(
+        client.transcribe(new Blob(), 'whisper-1')
+      ).rejects.toThrow('The operation was aborted')
+    })
+
+    it('should log errors on transcription failure', async () => {
+      const { invoke } = await import('@tauri-apps/api/core')
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'))
+
+      await expect(
+        client.transcribe(new Blob(), 'whisper-1')
+      ).rejects.toThrow('Network error')
+
+      expect(invoke).toHaveBeenCalledWith('log_error', {
+        message: 'Transcription failed',
+        details: 'Provider: openrouter, Model: whisper-1, Error: Network error'
+      })
+    })
   })
 
   describe('response handling', () => {
@@ -137,6 +166,121 @@ describe('OpenRouterClient', () => {
       const result = await client.transcribe(new Blob(), 'whisper-1')
 
       expect(result.text).toBe('')
+    })
+  })
+
+  describe('provider-specific API calls', () => {
+    it('should use OpenRouter API base for openrouter provider', async () => {
+      const openRouterClient = new OpenRouterClient('openrouter', 'test-key')
+      const mockResponse = { ok: true, json: async () => ({ text: 'test' }) }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as never)
+
+      await openRouterClient.transcribe(new Blob(), 'whisper-1')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://openrouter.ai/api/v1/audio/transcriptions',
+        expect.any(Object)
+      )
+    })
+
+    it('should use OpenAI API base for openai provider', async () => {
+      const openAiClient = new OpenRouterClient('openai', 'test-key')
+      const mockResponse = { ok: true, json: async () => ({ text: 'test' }) }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as never)
+
+      await openAiClient.transcribe(new Blob(), 'whisper-1')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://api.openai.com/v1/audio/transcriptions',
+        expect.any(Object)
+      )
+    })
+
+    it('should use Groq API base for groq provider', async () => {
+      const groqClient = new OpenRouterClient('groq', 'test-key')
+      const mockResponse = { ok: true, json: async () => ({ text: 'test' }) }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as never)
+
+      await groqClient.transcribe(new Blob(), 'whisper-1')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://api.groq.com/openai/v1/audio/transcriptions',
+        expect.any(Object)
+      )
+    })
+
+    it('should throw error for Ollama transcription', async () => {
+      const ollamaClient = new OpenRouterClient('ollama')
+
+      await expect(
+        ollamaClient.transcribe(new Blob(), 'whisper-1')
+      ).rejects.toThrow('Ollama does not support transcription')
+    })
+
+    it('should use Ollama API for chat', async () => {
+      const ollamaClient = new OpenRouterClient('ollama')
+      const mockResponse = { ok: true, json: async () => ({ message: { content: 'response' } }) }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as never)
+
+      const result = await ollamaClient.chat('llama2', [{ role: 'user', content: 'test' }])
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:11434/api/chat',
+        expect.any(Object)
+      )
+      expect(result).toBe('response')
+    })
+
+    it('should use OpenAI-compatible chat for non-Ollama providers', async () => {
+      const openAiClient = new OpenRouterClient('openai', 'test-key')
+      const mockResponse = { ok: true, json: async () => ({ choices: [{ message: { content: 'response' } }] }) }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as never)
+
+      const result = await openAiClient.chat('gpt-3.5-turbo', [{ role: 'user', content: 'test' }])
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://api.openai.com/v1/chat/completions',
+        expect.any(Object)
+      )
+      expect(result).toBe('response')
+    })
+
+    it('should use custom base URL when provided', async () => {
+      const customClient = new OpenRouterClient('openrouter', 'test-key', 'https://custom.api/v1')
+      const mockResponse = { ok: true, json: async () => ({ text: 'test' }) }
+      vi.mocked(fetch).mockResolvedValueOnce(mockResponse as never)
+
+      await customClient.transcribe(new Blob(), 'whisper-1')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://custom.api/v1/audio/transcriptions',
+        expect.any(Object)
+      )
+    })
+
+    it('should handle timeout gracefully in chat', async () => {
+      // Mock fetch to reject with AbortError (simulating timeout)
+      const abortError = new Error('The operation was aborted')
+      ;(abortError as any).name = 'AbortError'
+      vi.mocked(fetch).mockRejectedValueOnce(abortError)
+
+      await expect(
+        client.chat('gpt-4o-mini', [{ role: 'user', content: 'test' }])
+      ).rejects.toThrow('The operation was aborted')
+    })
+
+    it('should log errors on chat failure', async () => {
+      const { invoke } = await import('@tauri-apps/api/core')
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'))
+
+      await expect(
+        client.chat('gpt-4o-mini', [{ role: 'user', content: 'test' }])
+      ).rejects.toThrow('Network error')
+
+      expect(invoke).toHaveBeenCalledWith('log_error', {
+        message: 'Chat failed',
+        details: 'Provider: openrouter, Model: gpt-4o-mini, Error: Network error'
+      })
     })
   })
 })

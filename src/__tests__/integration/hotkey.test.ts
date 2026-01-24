@@ -4,6 +4,7 @@ type RecordingInfo = {
   is_recording: boolean
   mode: string
   start_time: number | null
+  action: string
 }
 
 type HotkeyEvent = {
@@ -23,6 +24,7 @@ describe('hotkey integration', () => {
         is_recording: false,
         mode: 'hold',
         start_time: null,
+        action: 'start',
       }
       expect(recordingInfo).toBeDefined()
     })

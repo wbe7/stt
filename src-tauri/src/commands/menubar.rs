@@ -22,10 +22,10 @@ pub async fn create_tray(app_handle: AppHandle) -> Result<(), String> {
     let settings_i = MenuItem::with_id(&app_handle, "settings", "Settings", true, None::<&str>)
         .map_err(|e| format!("Failed to create settings menu item: {}", e))?;
     
-    let record_i = MenuItem::with_id(&app_handle, "record", "Record", true, None::<&str>)
-        .map_err(|e| format!("Failed to create record menu item: {}", e))?;
+    let check_updates_i = MenuItem::with_id(&app_handle, "check_updates", "Check for Updates", true, None::<&str>)
+        .map_err(|e| format!("Failed to create check updates menu item: {}", e))?;
     
-    let menu = Menu::with_items(&app_handle, &[&record_i, &settings_i, &quit_i])
+    let menu = Menu::with_items(&app_handle, &[&check_updates_i, &settings_i, &quit_i])
         .map_err(|e| format!("Failed to create menu: {}", e))?;
     
     let app_handle_clone = app_handle.clone();
@@ -43,8 +43,8 @@ pub async fn create_tray(app_handle: AppHandle) -> Result<(), String> {
                 "settings" => {
                     let _ = app.emit("open-settings", ());
                 }
-                "record" => {
-                    let _ = app.emit("trigger-record", ());
+                "check_updates" => {
+                    // TODO: Implement check for updates
                 }
                 _ => {}
             }

@@ -92,7 +92,9 @@ class MockAudioContext {
   }
 
   createMediaStreamSource(): Record<string, unknown> {
-    return {}
+    return {
+      connect: vi.fn(),
+    }
   }
 
   createMediaStreamDestination(): Record<string, unknown> {
@@ -100,7 +102,16 @@ class MockAudioContext {
   }
 
   createAnalyser(): Record<string, unknown> {
-    return {}
+    return {
+      fftSize: 256,
+      frequencyBinCount: 128,
+      getByteFrequencyData: vi.fn((array: Uint8Array) => {
+        // Fill with some test data
+        for (let i = 0; i < array.length; i++) {
+          array[i] = Math.random() * 255
+        }
+      }),
+    }
   }
 
   createScriptProcessor(): Record<string, unknown> {
@@ -185,6 +196,8 @@ const global = globalThis as typeof globalThis & {
   Blob: typeof Blob
   BlobEvent: typeof BlobEvent
   FormData: typeof FormData
+  requestAnimationFrame: (callback: FrameRequestCallback) => number
+  cancelAnimationFrame: (handle: number) => void
 }
 
 global.AudioContext = MockAudioContext as unknown as typeof AudioContext
@@ -235,15 +248,47 @@ global.FormData = class MockFormData {
   }
 } as unknown as typeof FormData
 
-global.navigator = {
-  mediaDevices: {
-    getUserMedia: vi.fn().mockResolvedValue({
-      getTracks: vi.fn(() => []),
-      getAudioTracks: vi.fn(() => []),
-      getVideoTracks: vi.fn(() => []),
-    }),
+if (!global.navigator) {
+  global.navigator = {} as typeof global.navigator
+}
+
+const mediaDevicesListeners: Map<string, Set<(...args: unknown[]) => void>> = new Map()
+
+global.navigator.mediaDevices = {
+  getUserMedia: vi.fn().mockResolvedValue({
+    getTracks: vi.fn(() => []),
+    getAudioTracks: vi.fn(() => []),
+    getVideoTracks: vi.fn(() => []),
+  }),
+  enumerateDevices: vi.fn().mockResolvedValue([
+    {
+      deviceId: 'default',
+      kind: 'audioinput',
+      label: 'Default Microphone',
+    },
+    {
+      deviceId: 'mic1',
+      kind: 'audioinput',
+      label: 'Microphone 1',
+    },
+  ]),
+  addEventListener: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+    if (!mediaDevicesListeners.has(event)) {
+      mediaDevicesListeners.set(event, new Set())
+    }
+    mediaDevicesListeners.get(event)?.add(handler)
+  }),
+  removeEventListener: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+    mediaDevicesListeners.get(event)?.delete(handler)
+  }),
+  dispatchEvent: (event: Event) => {
+    const listeners = mediaDevicesListeners.get(event.type)
+    if (listeners) {
+      listeners.forEach(handler => handler(event))
+    }
+    return true
   },
-} as unknown as typeof global.navigator
+} as unknown as MediaDevices
 
 global.Blob = class MockBlob {
   parts: unknown[]
@@ -289,6 +334,28 @@ global.Blob = class MockBlob {
 } as unknown as typeof Blob
 
 global.BlobEvent = MockBlobEvent as unknown as typeof BlobEvent
+
+global.requestAnimationFrame = vi.fn((callback) => {
+  setTimeout(() => callback(0), 0)
+  return 1
+})
+
+global.cancelAnimationFrame = vi.fn()
+
+// Mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
 
 type RecordingInfo = {
   is_recording: boolean
